@@ -1,0 +1,56 @@
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://14.63.226.76:9606/ljy_db
+    username: ljy_user
+    password: "!ljyUser329"
+
+  security:
+    user:
+      name: user
+      password: 1234
+
+server:
+  port: 9064
+  error:
+    whitelabel:
+      enabled: false
+
+mybatis:
+  type-aliases-package: com.example.jwtproject.model.domain
+  mapper-locations: mapper/*.xml
+
+jwt:
+  header: Authorization
+  secret-key: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
+  prefix: Bearer
+
+
+#spring:
+#  datasource:
+#    driver-class-name: org.mariadb.jdbc.Driver
+#    url: jdbc:mariadb://localhost:3306/ljy329s
+#    username: root
+#    password: '1234'
+#
+#  security:
+#    user:
+#      name: user
+#      password: 1234
+#
+#server:
+#  port: 9064
+#  error:
+#    whitelabel:
+#      enabled: false
+#
+#jwt:
+#  response-header: Authorization
+#  secret-key: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
+#  prefix: Bearer
+#
+#mybatis:
+#  type-aliases-package: com.example.jwtproject.model.domain
+#  mapper-locations: mapper/*.xml
+
+
