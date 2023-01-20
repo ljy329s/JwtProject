@@ -24,12 +24,10 @@ jwt:
   header: Authorization
   secret-key: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
   prefix: Bearer
-  access-time: 6000*60*2
-  refresh-time: 6000*60*8
+  access-time: 120000
+  refresh-time: 1814400000
 
-
-
-
+#엑세스토큰 2분, 리프레시토큰 3주
 
 #spring:
 #  datasource:
@@ -53,8 +51,8 @@ jwt:
 #  header: Authorization
 #  secret-key: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
 #  prefix: Bearer
-#  access-time: 6000*60*2
-#  refresh-time: 6000*60*8
+#  access-time: 120000
+#  refresh-time: 1814400000
 #
 #mybatis:
 #  type-aliases-package: com.example.jwtproject.model.domain

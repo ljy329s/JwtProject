@@ -32,7 +32,7 @@ public class AuthCustomFilter extends AbstractHttpConfigurer<AuthCustomFilter, H
     public void configure(HttpSecurity http) throws Exception {
         AuthenticationManager authenticationManager = http.getSharedObject(AuthenticationManager.class);//꼭 넘겨야하는 파라미터 AuthenticationManger! 얘가 로그인을 진행하는 필터이기 때문
         http
-            .addFilter(new JwtAuthenticationFilter(authenticationManager, jwtYml))//인증처리
+            .addFilter(new JwtAuthenticationFilter(authenticationManager, jwtYml, tokenProvider))//인증처리
             .addFilter(new JwtAuthorizationFilter(authenticationManager , memberRepository, jwtYml));//인가처리
 
     }

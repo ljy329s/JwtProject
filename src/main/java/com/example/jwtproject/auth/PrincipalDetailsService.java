@@ -15,7 +15,6 @@ public class PrincipalDetailsService implements UserDetailsService {
 
     private final MemberRepository memberRepository;
     
-    private final TokenProvider tokenProvider;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         System.out.println("=======loadUserByUsername 시작===========");

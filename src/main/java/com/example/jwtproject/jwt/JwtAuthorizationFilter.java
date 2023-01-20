@@ -77,7 +77,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
         
         System.out.println("6. 강제로 시큐리티 세션에 접근하여 Authentication 객체를 저장한다.");
-        //sequrityContextHolder에 전달받은 jwt로 만든 authentication 을 저장해준다,.
+        //sequrityContextHolder에 전달받은 jwt로 만든 authentication 을 저장해준다.
         //Authentication에는 현재 권한이 들어있으므로 권한이 필요한 곳에 조회할때 해당 권한을 체크해줄것
         
         SecurityContextHolder.getContext().setAuthentication(authentication);
