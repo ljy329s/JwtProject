@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .formLogin().disable()
                 .apply(authCustomFilter)
                 .and()
+//            이곳에 동적으로 뿌려주는걸 해야함 예정!!
                 .authorizeRequests()
                 .antMatchers("/test").access("hasRole('ROLE_USER')")
                 .anyRequest().permitAll()//임시적 모든 권한 다 허용

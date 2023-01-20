@@ -27,6 +27,10 @@ jwt:
   access-time: 120000
   refresh-time: 1814400000
 
+redis:
+  host: localhost
+  port: 6379
+
 #엑세스토큰 2분, 리프레시토큰 3주
 
 #spring:
