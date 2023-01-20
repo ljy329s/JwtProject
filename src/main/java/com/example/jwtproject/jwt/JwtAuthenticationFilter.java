@@ -1,11 +1,16 @@
 package com.example.jwtproject.jwt;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.example.jwtproject.auth.PrincipalDetails;
+import com.example.jwtproject.common.JwtYml;
 import com.example.jwtproject.model.domain.Login;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -36,6 +41,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     
     private final AuthenticationManager authenticationManager;
     
+    private final JwtYml jwtYml;
+    
     /**
      * 엑세스토큰 만료시간 : 1분
      */
@@ -47,8 +54,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      */
     private long refreshTokenValidTime = Duration.ofMinutes(3).toMillis();
     
-    @Value("${jwt.secret-key}")
-    private String secretKey;
+  
     
     /**
      * /login 요청 하면 로그인 시도를 위해서 실행되는 메소드
@@ -57,7 +63,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         
         System.out.println("로그인시도");
-        
+   
         ObjectMapper om = new ObjectMapper();
         
         try {
@@ -93,9 +99,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             
             System.out.println(principalDetails.getUsername());//내코드
             System.out.println(principalDetails.getPassword());//내코드
-    
+            
             System.out.println("반환");
-
+            
             return authentication;//authentication을 반환하면 세션에 저장된다. 아마도 시큐리티 세션?
             
         } catch (IOException e) {
@@ -114,16 +120,16 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         throws IOException, ServletException {
         
         System.out.println("인증완료 JwtAuthenticationFilter 의 successfulAuthentication 실행");
-        super.successfulAuthentication(request, response, chain, authResult);
-    
+      //---  super.successfulAuthentication(request, response, chain, authResult);
+        
         System.out.println("authResult " + authResult);
-    
+        
         System.out.println("tokenProvider 호출");
-    
+        
         PrincipalDetails principal = ((PrincipalDetails) authResult.getPrincipal());
-    
-        System.out.println("principal :" +principal);
-       
+        
+        System.out.println("principal :" + principal);
+        
         //token = tokenProvider.createToken(principal, "ddddddqwedhklhuhqofhqoefhqiohfoidhfo");//시크릿키 임의로 줌 yml에서 값 가져올때 순서상 문제를 해결해야함
         //String tokenValue = token.getValue();
         //System.out.println("token : "+token);
@@ -136,7 +142,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         long tokenValidTime = accessTokenValidTime;
         Date now = new Date();
 
-        String secretKey = "aerqrqerqfqeyricrqyehcriqyiw"; //임의로 준값
         //header 설정
 //        Map<String, Object> headers = new HashMap<>();
 //        headers.put("typ", "JWT");
@@ -146,15 +151,19 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 //        Map<String, Object> payloads = new HashMap<>();
 //        payloads.put("id", principal.getMember().getId());//db는 int domain은 String 으로 지정
 //        payloads.put("email", principal.getMember().getEmail());
-        
-        Claims claims = Jwts.claims().setSubject(principal.getMember().getEmail());
-        claims.put("roles",principal.getMember().getRoles());
-        String token = Jwts.builder()
-            .setIssuer("ljy")//토큰발급자
-            .setIssuedAt(now)//토큰발행시간
-            .setExpiration(new Date(now.getTime() + tokenValidTime))//토큰만료시간
-            .signWith(SignatureAlgorithm.HS256, secretKey)
-            .compact();// 토큰발행
+        /**
+         * jjwt 방식
+         */
+//        Claims claims = Jwts.claims().setSubject(principal.getMember().getEmail());
+//        claims.put("roles",principal.getMember().getRoles());
+//        claims.put("username",principal.getUsername());
+//        String token = Jwts.builder()
+//            .setIssuer("ljy")//토큰발급자
+//            .setClaims(claims)
+//            .setIssuedAt(now)//토큰발행시간
+//            .setExpiration(new Date(now.getTime() + tokenValidTime))//토큰만료시간
+//            .signWith(SignatureAlgorithm.HS256, secretKey)
+//            .compact();// 토큰발행
 //        String token = Jwts.builder()
 //            .setSubject("jwtTest")
 //            .setIssuer("ljy")//토큰발급자
@@ -165,15 +174,29 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 //            .signWith(SignatureAlgorithm.HS256, secretKey)
 //            .compact();// 토큰발행
 ////        토큰생성로직
+/**
+ * auth0 방식
+ */
+
 
 //        Cookie cookie = new Cookie("ljy", token);
 //        cookie.setHttpOnly(true);
 //        cookie.setSecure(true);
 //        response.addCookie(cookie);//토큰을 쿠키에 저장
-        System.out.println("token : " +"Bearer "+ token);
-        response.addHeader("Authorization","Bearer "+token);//나중엔 토큰을 쿠키에 저장하자
-      //  this.getSuccessHandler().onAuthenticationSuccess(request, response, authResult);
-        
+        String token = JWT.create()
+            .withSubject("Jwt_accessToken")
+            .withExpiresAt(new Date(System.currentTimeMillis() + 1000 * 60 * 5))//만료시간 5분
+            .withClaim("username", principal.getMember().getUsername())
+            .withClaim("roles", principal.getMember().getRoles())
+                .sign(Algorithm.HMAC256(jwtYml.getSecretKey()));
+        System.out.println("token : " + "Bearer " + token);
+    
+        System.out.println("==================response.addHeader 시작==================");
+        response.addHeader("Authorization", "Bearer " + token);//나중엔 토큰을 쿠키에 저장하자
+        System.out.println("==================response.addHeader 끝 "+ token +" ==================");
+        //this.getSuccessHandler().onAuthenticationSuccess(request, response, authResult);
+        System.out.println("responseAddHeader "+ response.getHeader(token));
+       
     }
     
     

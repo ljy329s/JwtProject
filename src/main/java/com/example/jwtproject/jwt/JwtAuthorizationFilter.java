@@ -1,56 +1,91 @@
-//package com.example.jwtproject.jwt;
-//
-//import com.example.jwtproject.model.repository.MemberRepository;
-//import org.springframework.security.authentication.AuthenticationManager;
-//import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-//
-//import javax.servlet.FilterChain;
-//import javax.servlet.ServletException;
-//import javax.servlet.http.HttpServletRequest;
-//import javax.servlet.http.HttpServletResponse;
-//import java.io.IOException;
-//
-///**
-// * 권한이나 인증이 필요한 특정 주소를 요청했을때 BasicAuthenticationFilter를 타게된다.
-// * 권한이나 인증이 필요없다면 타지않게된다.
-// */
-//
-//public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
-//
-//    private MemberRepository memberRepository;
-//
-//    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, MemberRepository memberRepository) {
-//        super(authenticationManager);
-//        this.memberRepository = memberRepository;
-//    }
-//
-//    //인증이나 권한이 필요한 요청에는 이 필터를 거치게 된다.
-//
-//    @Override
-//    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-//        System.out.println("===============인증 및 권한 확인하는 필터 접속===============");
-//        System.out.println("1.권한이나 인증이 필요한 요청이 전달됨!");
-//
-//        String jwtHeader = request.getHeader("Authorization");//헤더에 들어있는 Authorization을 꺼낸다.
-//        System.out.println("jwtHeader : "+ jwtHeader);
-//
-//        System.out.println("2.Header 검증");
-//        //헤더가 비어있거나 Bearer방식이 아니라면 반환시킨다.
-//        if(jwtHeader == null || !jwtHeader.startsWith("Bearer")){
-//            chain.doFilter(request,response);
-//            return;
-//        }
-//        System.out.println("=========================");
-//
-//        //정상적인 사용자인지, 권한이 있는지 확인
-//        System.out.println("3. Jwt 토큰을 검증해서 정상적인 사용자인지, 권한이 맞는지 확인");
-//        String jwtToken = request.getHeader("Authorization").replace("Bearer ","");
-//        String username = null;
-//
-//
-//
-//
-//    }
-//
-//
-//}
+package com.example.jwtproject.jwt;
+
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.example.jwtproject.auth.PrincipalDetails;
+import com.example.jwtproject.common.JwtYml;
+import com.example.jwtproject.model.domain.Member;
+import com.example.jwtproject.model.repository.MemberRepository;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+/**
+ * 권한이나 인증이 필요한 특정 주소를 요청했을때 BasicAuthenticationFilter 를 타게된다.
+ * 권한이나 인증이 필요없다면 타지않게된다.
+ */
+
+
+public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
+    private final JwtYml jwtYml;
+    private final MemberRepository memberRepository;
+    
+    
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, MemberRepository memberRepository, JwtYml jwtYml) {
+        super(authenticationManager);
+        this.memberRepository = memberRepository;
+        this.jwtYml = jwtYml;
+    }
+    
+    //인증이나 권한이 필요한 요청에는 이 필터를 거치게 된다.
+    
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+        System.out.println("===============인증 및 권한 확인하는 필터 접속===============");
+        
+        System.out.println("1.권한이나 인증이 필요한 요청이 전달됨!");
+        
+        String jwtHeader = request.getHeader("Authorization");//헤더에 들어있는 Authorization을 꺼낸다.
+        
+        
+        System.out.println("2.Header 검증");
+        //헤더가 비어있거나 Bearer 방식이 아니라면 반환시킨다.
+        if (jwtHeader == null || !jwtHeader.startsWith(jwtYml.getPrefix())) {
+            chain.doFilter(request, response);
+            System.out.println("권한이 없습니다");
+            return;
+        }
+        System.out.println("=========================");
+        
+        //정상적인 사용자인지, 권한이 있는지 확인
+        System.out.println("3. Jwt 토큰을 검증해서 정상적인 사용자인지, 권한이 맞는지 확인");
+        //String jwtToken = request.getHeader("Authorization").replace("Bearer ","");
+        String jwtToken = request.getHeader(jwtYml.getHeader()).replace(jwtYml.getPrefix() + " ", "");
+        
+        String username = null;
+        //적용했던 알고리즘으로 시크릿키를 해시하고 전달받은 토큰을 검증한다.
+        //토큰에서 id에 해당하는 value를 문자열로 꺼낸다.
+        username = JWT.require(Algorithm.HMAC256(jwtYml.getSecretKey()))
+            .build()
+            .verify(jwtToken)
+            .getClaim("username")
+            .asString();
+        
+        System.out.println("4. 정상적인 서명이 검증됐다. username으로 회원을 조회한다.");
+        Member member = memberRepository.selectMember(username);
+        PrincipalDetails principalDetails = new PrincipalDetails(member);
+        
+        System.out.println("5. jwt 토큰서명을 통해서 서명이 정상이면 Authentication 객체를 만들어준다.");
+        Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
+        
+        System.out.println("6. 강제로 시큐리티 세션에 접근하여 Authentication 객체를 저장한다.");
+        //sequrityContextHolder에 전달받은 jwt로 만든 authentication 을 저장해준다,.
+        //Authentication에는 현재 권한이 들어있으므로 권한이 필요한 곳에 조회할때 해당 권한을 체크해줄것
+        
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        
+        chain.doFilter(request, response);
+        
+        
+    }
+    
+    
+}

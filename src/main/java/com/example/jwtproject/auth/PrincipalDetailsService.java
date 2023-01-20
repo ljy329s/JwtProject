@@ -21,12 +21,11 @@ public class PrincipalDetailsService implements UserDetailsService {
         System.out.println("=======loadUserByUsername 시작===========");
         Member member = memberRepository.selectMember(username);
         if(member==null){
-            System.out.println("로그인실패");
+            System.out.println("로그인 실패");
             return null;
         }
         System.out.println("로그인 성공");
-        //System.out.println("성공했으니까 토큰 발행해야지~ 토큰");
-        //tokenProvider.createToken(member);
+        
         return new PrincipalDetails(member);
     }
 }

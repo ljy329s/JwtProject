@@ -24,6 +24,11 @@ jwt:
   header: Authorization
   secret-key: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
   prefix: Bearer
+  access-time: 6000*60*2
+  refresh-time: 6000*60*8
+
+
+
 
 
 #spring:
@@ -45,12 +50,14 @@ jwt:
 #      enabled: false
 #
 #jwt:
-#  response-header: Authorization
+#  header: Authorization
 #  secret-key: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
 #  prefix: Bearer
+#  access-time: 6000*60*2
+#  refresh-time: 6000*60*8
 #
 #mybatis:
 #  type-aliases-package: com.example.jwtproject.model.domain
 #  mapper-locations: mapper/*.xml
-
-
+#
+#

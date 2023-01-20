@@ -18,6 +18,9 @@ public class PrincipalDetails implements UserDetails , Serializable {
         this.member = member;
     }
     
+    /**
+     * 유저의 권한 체크
+     */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Collection<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
@@ -28,6 +31,8 @@ public class PrincipalDetails implements UserDetails , Serializable {
         });
         return authorities;
     }
+    
+    
     public Member getMember(){
         return this.member;
     }
