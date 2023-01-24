@@ -21,7 +21,7 @@ public class JwtYml {
     
     private final long accessTime;
     
-    private final long refreshToken;
+    private final long refreshTime;
     
     //base64로 인코딩
     public String getSecretKey() {

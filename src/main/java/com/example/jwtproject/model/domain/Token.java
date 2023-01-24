@@ -15,6 +15,10 @@ public class Token {
     private String value;
     
     private Long expiredTime;
+
+    private String username;
+
+    private String accessToken;
     
     
     @Builder

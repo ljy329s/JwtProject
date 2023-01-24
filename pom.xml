@@ -42,11 +42,11 @@
             <optional>true</optional>
         </dependency>
         <!--        jjwt : JWT 토큰 생성 및 JWT 토큰 파싱, 검증을 해주는 라이브러리     -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt</artifactId>
-            <version>0.9.1</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.jsonwebtoken</groupId>-->
+<!--            <artifactId>jjwt</artifactId>-->
+<!--            <version>0.9.1</version>-->
+<!--        </dependency>-->
 
         <!--        jwt을 쉽게 만들도록 도와줌-->
         <dependency>
@@ -58,6 +58,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+            <version>2.6.0</version>
         </dependency>
         <!--        slf4j       -->
         <dependency>

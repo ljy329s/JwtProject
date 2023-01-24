@@ -85,7 +85,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             Authentication authentication =
                 authenticationManager.authenticate(authenticationToken);//authenticate(Authentication) : 인증의 전반적인 관리
             //3.로그인 성공
-            System.out.println("3. 로그인 성공");
+            System.out.println("3. 로그인 성공?확인중");
 
 
             PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
@@ -111,13 +111,11 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult)
         throws IOException, ServletException {
-
+        System.out.println("로그인성공시 돌게될 곳");
         System.out.println("인증완료 JwtAuthenticationFilter 의 successfulAuthentication 실행");
         //---  super.successfulAuthentication(request, response, chain, authResult);
 
-        System.out.println("tokenProvider 호출");
-
-        PrincipalDetails principal = ((PrincipalDetails) authResult.getPrincipal());
+    PrincipalDetails principal = ((PrincipalDetails) authResult.getPrincipal());
 
         System.out.println("principal :" + principal);
 
@@ -125,22 +123,34 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
          * jjwt 방식
          */
 
-        long tokenValidTime = accessTokenValidTime;
-        Date now = new Date();
+//        long tokenValidTime = accessTokenValidTime;
+//        Date now = new Date();
 
-        String token = tokenProvider.createToken(principal);
+        System.out.println("tokenProvider 호출");
 
-        System.out.println("token : " + "Bearer " + token);
+        //엑세스토큰 생성
+        String accToken = tokenProvider.createToken(principal);
+
+        //리프레시 토큰 생성
+        String refToken = tokenProvider.refreshToken(principal);
+        System.out.println("token : " + "Bearer " + accToken);
 
         System.out.println("==================response.addHeader 시작==================");
-        response.addHeader("Authorization", "Bearer " + token);//나중엔 토큰을 쿠키에 저장하자
-//        Cookie cookie = new Cookie("ljy", token);
-//        cookie.setHttpOnly(true);
-//        cookie.setSecure(true);
-//        response.addCookie(cookie);
-        //this.getSuccessHandler().onAuthenticationSuccess(request, response, authResult);
-        System.out.println("responseAddHeader " + response.getHeader(token));
+        response.addHeader("Authorization", "Bearer " + accToken);//나중엔 토큰을 쿠키에 저장하자
+
+        //리프레시 토큰 저장
+
+        System.out.println("responseAddHeader " + response.getHeader(accToken));
 
     }
 
+    /**
+     *로그인 실패시 호출되는 메서드
+     * AuthenticationService에서 발생하는 exception handling
+     */
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
+        System.out.println("로그인실패시 돌게 될곳");
+        super.unsuccessfulAuthentication(request, response, failed);
+    }
 }

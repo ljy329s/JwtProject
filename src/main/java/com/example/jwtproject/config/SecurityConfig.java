@@ -26,6 +26,7 @@ public class SecurityConfig {
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+        System.out.println("시큐리티 컨피그");
 
         return http
                 .httpBasic().disable()
@@ -39,7 +40,9 @@ public class SecurityConfig {
 //            이곳에 동적으로 뿌려주는걸 해야함 예정!!
                 .authorizeRequests()
                 .antMatchers("/test").access("hasRole('ROLE_USER')")
-                .anyRequest().permitAll()//임시적 모든 권한 다 허용
+                .antMatchers("/","/reissue").permitAll()
+                //.anyRequest().authenticated()// 나머지 요청은 인증된 사람만 허용가능
+                .anyRequest().permitAll()//모든 권한 다 허용
                 .and()
                 .build();
 
