@@ -13,6 +13,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -136,7 +137,14 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         System.out.println("token : " + "Bearer " + accToken);
 
         System.out.println("==================response.addHeader 시작==================");
-        response.addHeader("Authorization", "Bearer " + accToken);//나중엔 토큰을 쿠키에 저장하자
+        //response.addHeader("Authorization", "Bearer " + accToken);//나중엔 토큰을 쿠키에 저장하자
+    
+        Cookie cookie = new Cookie(jwtYml.getHeader(), jwtYml.getPrefix() + accToken);
+        cookie.setHttpOnly(true);//스크립트 상에서 접근이 불가능하도로고 한다.
+        cookie.setSecure(true);//패킷감청을 막기 위해서 https 통신시에만 해당 쿠키를 사용하도록 한다.
+        cookie.setPath("/");//쿠키경로 설정 모든경로에서 "/" 사용하겠다
+        cookie.setMaxAge(60 * 2);//초단위로 설정됨 yml에 설정한 엑세스토큰의 만료시간인 120000 즉 2분으로 설정
+        response.addCookie(cookie);
 
         //리프레시 토큰 저장
 
