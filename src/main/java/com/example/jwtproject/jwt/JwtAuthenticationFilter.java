@@ -20,8 +20,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Date;
 
-//로그인 /login 요청시 실행 인증관련 필터
-
 /**
  * 로그인 요청이 오면 JwtAuthenticationFilter 에서 attemptAuthentication() 을 호출하여 인증처리
  * username , password가 정상이면 authenticationToken을 발급
@@ -48,8 +46,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      * //
      */
     private long refreshTokenValidTime = Duration.ofMinutes(3).toMillis();
-
-
+    
+    
     /**
      * /login 요청 하면 로그인 시도를 위해서 실행되는 메소드
      */
@@ -94,6 +92,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             System.out.println(principalDetails.getUsername());//내코드
             System.out.println(principalDetails.getPassword());//내코드
 
+            
             System.out.println("반환");
 
             return authentication;//authentication을 반환하면 세션에 저장된다. 아마도 시큐리티 세션?
@@ -106,6 +105,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 
     /**
+     * 성공시!
      * attemptAuthentication() 실행후 인증이 정상완료되면 실행된다.
      * 따라서 , 여기서 jwt 토큰을 만들어서 request 요청한 사용자에게 jwt토큰을 response 해준다.
      */
@@ -133,7 +133,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String accToken = tokenProvider.createToken(principal);
 
         //리프레시 토큰 생성
-        String refToken = tokenProvider.refreshToken(principal);
+        tokenProvider.refreshToken(principal);
         System.out.println("token : " + "Bearer " + accToken);
 
         System.out.println("==================response.addHeader 시작==================");

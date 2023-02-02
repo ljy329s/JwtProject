@@ -1,7 +1,6 @@
 package com.example.jwtproject.jwt;
 
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.example.jwtproject.auth.PrincipalDetails;
 import com.example.jwtproject.common.JwtYml;
 import com.example.jwtproject.model.domain.Member;
@@ -9,6 +8,7 @@ import com.example.jwtproject.model.repository.MemberRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
@@ -39,7 +39,8 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         this.jwtYml = jwtYml;
         this.tokenProvider = tokenProvider;
     }
-
+    
+    
     //인증이나 권한이 필요한 요청에는 이 필터를 거치게 된다.
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -62,7 +63,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         System.out.println("3. Jwt 토큰을 검증해서 정상적인 사용자인지, 권한이 맞는지 확인");
         String jwtToken;
         jwtToken = request.getHeader(jwtYml.getHeader()).replace(jwtYml.getPrefix() + " ", "");
-//
+        
         //엑세스 토큰이 만료확인
 //        if (tokenProvider.isExpiredAccToken(jwtToken)) {
 //            System.out.println("엑세스 토큰이 만료됐습니다.");
@@ -128,5 +129,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
 
     }
+    
 
 }
