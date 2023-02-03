@@ -132,7 +132,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         //엑세스토큰 생성
         String accToken = tokenProvider.createToken(principal);
 
-        //리프레시 토큰 생성
+        //리프레시 토큰 생성 맟 레디스 저장
         tokenProvider.refreshToken(principal);
         System.out.println("token : " + "Bearer " + accToken);
 
@@ -145,8 +145,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         cookie.setPath("/");//쿠키경로 설정 모든경로에서 "/" 사용하겠다
         cookie.setMaxAge(60 * 2);//초단위로 설정됨 yml에 설정한 엑세스토큰의 만료시간인 120000 즉 2분으로 설정
         response.addCookie(cookie);
-
-        //리프레시 토큰 저장
 
         System.out.println("responseAddHeader " + response.getHeader(accToken));
 

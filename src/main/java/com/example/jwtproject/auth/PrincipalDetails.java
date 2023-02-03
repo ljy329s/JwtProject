@@ -19,11 +19,11 @@ public class PrincipalDetails implements UserDetails , Serializable {
     }
     
     /**
-     * 유저의 권한 체크
+     * 유저의 권한을 리턴한는곳
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        Collection<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
         member.getRoleList().forEach(r ->{
             authorities.add(() -> {
             return  r;
