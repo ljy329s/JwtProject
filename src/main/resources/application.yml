@@ -11,7 +11,7 @@ spring:
       password: 1234
 
 server:
-  port: 9064
+  port: 9065
   error:
     whitelabel:
       enabled: false
@@ -24,7 +24,7 @@ jwt:
   header: Authorization
   secret-key: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
   prefix: Bearer
-  access-time: 120000
+  access-time: 12000
   refresh-time: 1814400000
 
 redis:

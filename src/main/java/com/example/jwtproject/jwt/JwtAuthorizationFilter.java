@@ -1,10 +1,12 @@
 package com.example.jwtproject.jwt;
 
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.example.jwtproject.auth.PrincipalDetails;
 import com.example.jwtproject.common.JwtYml;
 import com.example.jwtproject.model.domain.Member;
 import com.example.jwtproject.model.repository.MemberRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,7 +27,7 @@ import static com.auth0.jwt.JWT.require;
  * 권한이나 인증이 필요없다면 타지않게된다.
  */
 
-
+@Slf4j
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     private final JwtYml jwtYml;
     private final MemberRepository memberRepository;
@@ -44,14 +46,29 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     //인증이나 권한이 필요한 요청에는 이 필터를 거치게 된다.
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        System.out.println("===============인증 및 권한 확인하는 필터 접속===============");
+        //모든요청시 거치는 doFilterInternal에서 제일먼저 엑세스토큰의 만료여부를 체크하는 로직을 돌게하기
+        String acToken = tokenProvider.getTokenFromCookie(request,response);
+        String username = "";//prefix가 포함된 엑세스토큰
+        if(acToken != null){
+            if(tokenProvider.isExpiredAccToken(acToken)){//만료라면
+                //만료일때만 동작
+                System.out.println("엑세스 토큰이 만료됐습니다.");
+                System.out.println("엑세스 토큰 재발급 전 리프레시 토큰 확인");
+                username = tokenProvider.getNameFromToken(acToken);//토큰에서 이름 꺼내기
+                System.out.println("username?"+ username);
+                tokenProvider.isExpiredRefToken(username);//username을 통해서 리프레시 토큰의 만료여부를 확인
+                
+            }
+        }
+        
+        log.info("===============인증 및 권한 확인하는 필터 접속===============");
         System.out.println("1.권한이나 인증이 필요한 요청이 전달됨!");
-
-        String jwtHeader = request.getHeader("Authorization");//헤더에 들어있는 Authorization을 꺼낸다.
-
+        //쿠키에서 토큰을 가져온다.
+       String accToken = tokenProvider.getTokenFromCookie(request,response);
+       
         System.out.println("2.Header 검증");
         //헤더가 비어있거나 Bearer 방식이 아니라면 반환시킨다.
-        if (jwtHeader == null || !jwtHeader.startsWith(jwtYml.getPrefix())) {
+        if (accToken == null || !accToken.startsWith(jwtYml.getPrefix())) {
             chain.doFilter(request, response);
             System.out.println("권한이 없습니다");
             return;
@@ -62,55 +79,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         //정상적인 사용자인지, 권한이 있는지 확인
         System.out.println("3. Jwt 토큰을 검증해서 정상적인 사용자인지, 권한이 맞는지 확인");
         String jwtToken;
-        jwtToken = request.getHeader(jwtYml.getHeader()).replace(jwtYml.getPrefix() + " ", "");
+        jwtToken = accToken.replace(jwtYml.getPrefix(), "");//prefix를 제외한 쿠키
         
-        //엑세스 토큰이 만료확인
-//        if (tokenProvider.isExpiredAccToken(jwtToken)) {
-//            System.out.println("엑세스 토큰이 만료됐습니다.");
-//            System.out.println("엑세스 토큰 재발급 전 리프레시 토큰 확인");
-//
-//
-//            //엑세스 토큰이 만료됐으면 리프레시 토큰의 만료여부를 확인해야하고,
-//            //7일이내 남은건지 확인해야함
-//            try {
-//
-//                String username = require(Algorithm.HMAC256(jwtYml.getSecretKey()))
-//                        .build()
-//                        .verify(jwtToken)
-//                        .getClaim("username")
-//                        .asString();
-//
-//                System.out.println("username? : "+ username);
-//
-//                System.out.println("리프레시토큰 만료 확인");
-//                if (tokenProvider.isExpiredRefToken(username)) {
-//                    System.out.println("리프레시 토큰 만료 + 로그아웃처리");
-//                    //만료라면 로그아웃 처리를 엑세스 + 리프레시 둘다 만료니까
-//                } else {
-//                    System.out.println("리프레시 토큰 유효 + 엑세스 토큰 재발급");
-//                    //유효할때 엑세스 토큰 재발급
-//                    jwtToken = tokenProvider.reCreateAccToken(jwtToken);
-//
-//                }
-//            }catch (TokenExpiredException e){
-//                System.out.println("만료된 엑세스토큰에서 값 꺼내기");
-//            }
-//
-//
-//
-//        }else //엑세스토큰이 만료 되지 않았을때
-        System.out.println("엑세스토큰 유효");
 
-        //String username = null;
-        //적용했던 알고리즘으로 시크릿키를 해시하고 전달받은 토큰을 검증한다.
-        //토큰에서 id에 해당하는 value를 문자열로 꺼낸다.
-        String username = require(Algorithm.HMAC256(jwtYml.getSecretKey()))
-                .build()
-                .verify(jwtToken)
-                .getClaim("username")
-                .asString();
-
-        System.out.println(username);
+        
 
         System.out.println("4. 정상적인 서명이 검증됐다. username으로 회원을 조회한다.");
         Member member = memberRepository.selectMember(username);

@@ -20,10 +20,10 @@ public class PrincipalDetailsService implements UserDetailsService {
         System.out.println("=======loadUserByUsername 시작===========");
         Member member = memberRepository.selectMember(username);
         if(member==null){
-            System.out.println("로그인 실패");
+            System.out.println("유저 없음");
             return null;
         }
-        System.out.println("로그인 성공");
+        System.out.println("해당 유저 존재");
         
         return new PrincipalDetails(member);
     }
