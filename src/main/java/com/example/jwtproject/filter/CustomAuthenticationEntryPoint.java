@@ -22,8 +22,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
         System.out.println("인증시 예외처리");
-        String exception = (String)request.getAttribute("exception");
-        //토큰 만료시
+        
 
     }
 }

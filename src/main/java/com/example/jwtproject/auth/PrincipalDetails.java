@@ -1,12 +1,16 @@
 package com.example.jwtproject.auth;
 
 import com.example.jwtproject.model.domain.Member;
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+
+
 
 public class PrincipalDetails implements UserDetails , Serializable {
     
@@ -17,6 +21,8 @@ public class PrincipalDetails implements UserDetails , Serializable {
     public PrincipalDetails(Member member){
         this.member = member;
     }
+    
+    
     
     /**
      * 유저의 권한을 리턴한는곳

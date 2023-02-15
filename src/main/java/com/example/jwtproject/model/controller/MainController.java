@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MainController {
     
-//    @GetMapping("/")
-//    public String Main(){
-//        return "<h1>메인화면입니다</h1>";
-//    }
+    @GetMapping("/")
+    public String Main(){
+        return "<h1>메인화면입니다</h1>";
+    }
     
     @GetMapping(value = "/test")
     public String Test(){
