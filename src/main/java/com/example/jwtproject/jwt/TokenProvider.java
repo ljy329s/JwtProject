@@ -3,15 +3,11 @@ package com.example.jwtproject.jwt;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.example.jwtproject.auth.PrincipalDetails;
-import com.example.jwtproject.auth.PrincipalDetailsService;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.jwtproject.common.JwtYml;
 import com.example.jwtproject.model.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.time.Duration;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -38,14 +34,14 @@ public class TokenProvider {
     
     private final RedisService redisService;
     
-    //private final PrincipalDetails principalDetails;
     
     /**
-     * 엑세스 토큰을 만드는 메서드
+     * 엑세스 토큰을 생성하는 메서드
      */
     
     @Transactional
     public String createToken(String username) {
+        System.out.println("엑세스토큰생성");
         String token = JWT.create()
             .withSubject("Jwt_accessToken")
             .withExpiresAt(new Date(System.currentTimeMillis() + jwtYml.getAccessTime()))//만료시간 2분
@@ -58,46 +54,14 @@ public class TokenProvider {
      * 리프레시 토큰을 생성하는 메서드
      */
     @Transactional
-    public String refreshToken(PrincipalDetails principal) {
-        String refKey = principal.getMember().getUsername();
+    public void refreshToken(String username) {//PrincipalDetails principal
+        String refKey = username;
         String refToken = JWT.create()
             .withSubject("Jwt_refreshToken")
             .withExpiresAt(new Date(System.currentTimeMillis() + jwtYml.getRefreshTime()))//만료시간 6분
             .sign(Algorithm.HMAC256(jwtYml.getSecretKey()));
-        redisService.setRefreshToken(refKey, refToken);
-        System.out.println("리프레시 토큰 발행 : " + refToken);
-        return null;
-    }
-    
-    
-    /**
-     * 엑세스 토큰을 재발급 하는 메서드
-     */
-    
-    @Transactional
-    public String reCreateAccToken(String jwtToken) {
-        
-        String username = getNameFromToken(jwtToken);
-        String reAccToken = createToken(username);// 2. 엑세스토큰 재발급 기존의 엑세스토큰의 발행메소드 사용
-        
-        return reAccToken;
-    }
-    
-    
-    /**
-     * 리프레시 토큰을 재발행 하는 메서드
-     */
-    
-    @Transactional
-    public String refreshUpdateToken(String username) {
-        String refToken = JWT.create()
-            .withSubject("Jwt_refreshToken")
-            .withExpiresAt(new Date(System.currentTimeMillis() + jwtYml.getRefreshTime()))//만료시간 6분
-            .sign(Algorithm.HMAC256(jwtYml.getSecretKey()));
-        redisService.setRefreshToken(username, refToken);
-        System.out.println("리프레시 토큰 재발행 : " + refToken);
-        return null;
-        
+        redisService.setRefreshToken(refKey, refToken, jwtYml.getRefreshTime());
+        log.info("RefToken 생성 : " + refToken);
     }
     
     /**
@@ -106,8 +70,6 @@ public class TokenProvider {
     
     public boolean isExpiredAccToken(String jwtToken) {
         String npToken = jwtToken.replace(jwtYml.getPrefix(), "");//헤더제거
-    
-        System.out.println("엑세스토큰의 만료여부를 확인하고자 토큰 확인"+jwtToken);
         
         Date now = new Date();
         try {
@@ -115,14 +77,14 @@ public class TokenProvider {
                 .build()
                 .verify(npToken)
                 .getExpiresAt();
-            System.out.println("지금시간" + now);
-            System.out.println("엑세스토큰의 만료여부 확인" + expiresAt);
+            log.info("지금시간 : " + now);
+            log.info("엑세스토큰의 만료시간 : " + expiresAt);
             if (now.before(expiresAt)) {//현재시간이 만료시간보다 이전이라면
                 System.out.println("만료전");
                 return false;
             }
         } catch (TokenExpiredException e) {
-            System.out.println("만료된 토큰입니다.");
+            log.info("만료된 토큰입니다.");
             return true;
         }
         return false;
@@ -133,28 +95,27 @@ public class TokenProvider {
      * 리프레시 토큰의 만료여부를 확인하는 토큰 레디스에 존재하면 아직 만료기간 안지난거니까
      */
     
-    public void isExpiredRefToken(String username) {
+    public void isExpiredRefToken(String username, HttpServletResponse response) {
         System.out.println("리프레시 토큰의 만료여부를 확인하는 메서드 isExpiredRefToken()");
         try {
-            
             if (redisService.getRefreshToken(username) != null) {//리프레시 토큰이 존재한다면
                 System.out.println("리프레시 토큰 존재 만료기간 확인");
                 if (checkRefreshToken(username)) {//리프레시 토큰의 만료기간 확인 7일전이라면
-                    log.info("리프레시 토큰 7일전");
-                    System.out.println("리프레시 토큰 만료 7일전 리프레시토큰 재생성");
-                    refreshUpdateToken(username);//리프레시 토큰 생성
+                    log.info("리프레시 토큰 만료 7일전 리프레시토큰 재생성");
+                    refreshToken(username);//리프레시 토큰 생성
                     createToken(username);//엑세스토큰 생성
                 } else {
-                    System.out.println("리프레시토큰 만료일 7일이상 엑세스토큰만 재발급");
+                    log.info("리프레시토큰 만료일 7일이상 엑세스토큰만 재발급");
                     createToken(username);
-                    
                 }
+            } else {
+                log.info("리프레시 토큰이 없습니당 재로그인 요청1");
+                response.sendRedirect("/logout");
+                
             }
-        } catch (TokenExpiredException e) {
+        } catch (TokenExpiredException | IOException e) {
             System.out.println(e.getMessage());
-            log.info("리프레시 토큰이 없습니당");
-            System.out.println("리프레시토큰이 없습니다 로그아웃처리");
-            
+            log.info("리프레시 토큰이 없습니당 재로그인 요청2");
         }
     }
     
@@ -168,7 +129,7 @@ public class TokenProvider {
             String token = redisService.getRefreshToken(username);
             Date expiresAt = JWT.require(Algorithm.HMAC256(jwtYml.getSecretKey()))
                 .build()
-                .verify(token)
+                .verify(token)//verify는 만료된 토큰을 예외로 던져준다.
                 .getExpiresAt();
             
             Date current = new Date(System.currentTimeMillis());
@@ -204,9 +165,7 @@ public class TokenProvider {
                     return accToken;
                 }
             }
-            
-        }//쿠키가 존재하지 않는다면
-        else {
+        } else {//쿠키가 존재하지 않는다면
             System.out.println("쿠키없음");
             return null;
         }
@@ -217,21 +176,18 @@ public class TokenProvider {
     /**
      * token 을 디코드 하여 username 을 반환하는 메서드
      */
-    public String getNameFromToken(String token){
+    
+    public String getNameFromToken(String token) {
+        
         String npToken = token.replace(jwtYml.getPrefix(), "");
-        String username = "";
-        try {
-            username += require(Algorithm.HMAC256(jwtYml.getSecretKey()))
-                .build()
-                .verify(npToken)//prefix가 없는 토큰
-                .getClaim("username")
-                .asString();
-            System.out.println("username" + username);
+        if (token != null) {
+            DecodedJWT decodedJwt = JWT.decode(npToken);//decode() 메서드는 토큰의 만료를 확인하지 않으므로 토큰이 만료된 경우에도 사용자 이름을 반환한다.
+            String username = decodedJwt.getClaim("username").asString();
             return username;
-        } catch (TokenExpiredException e) {
-        return username;
+        } else {
+            return null;
         }
     }
-    }
+}
     
 

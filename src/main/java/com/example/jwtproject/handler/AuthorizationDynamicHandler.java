@@ -14,13 +14,5 @@ import javax.servlet.http.HttpServletRequest;
 @Component
 public class AuthorizationDynamicHandler{
     
-    public boolean isAuthorization(HttpServletRequest request, Authentication authentication){
-        System.out.println("요청 url : " + request.getRequestURI());
-    
-        Object principalDetails = (PrincipalDetails)authentication.getPrincipal();
-        
-        if (principalDetails == null || (principalDetails instanceof UserDetailsService)){
-            System.out.println("");
-        }return true;
-    }
+
 }

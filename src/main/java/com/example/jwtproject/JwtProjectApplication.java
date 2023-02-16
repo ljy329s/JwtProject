@@ -9,7 +9,6 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class JwtProjectApplication {
     
-
     public static void main(String[] args) {
         SpringApplication.run(JwtProjectApplication.class, args);
     }

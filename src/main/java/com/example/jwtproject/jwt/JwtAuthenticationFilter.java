@@ -6,13 +6,11 @@ import com.example.jwtproject.model.domain.Login;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.stereotype.Component;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -21,7 +19,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Date;
 
 /**
  * 로그인 요청이 오면 JwtAuthenticationFilter 에서 attemptAuthentication() 을 호출하여 인증처리
@@ -40,17 +37,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     
     private final TokenProvider tokenProvider;
     
-    /**
-     * 엑세스토큰 만료시간 : 1분
-     */
-    private long accessTokenValidTime = Duration.ofMinutes(1).toMillis();//만료시간 30분
-    
-    /**
-     * //     * 리프레시토큰 만료시간 : 3분
-     * //
-     */
-    private long refreshTokenValidTime = Duration.ofMinutes(3).toMillis();
-    
     
     /**
      * /login 요청 하면 로그인 시도를 위해서 실행되는 메소드
@@ -67,14 +53,13 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             //Authenticate 를 위한 UserPasswordAuthenticationToken 을 발행한다.
             
             Login login = om.readValue(request.getInputStream(), Login.class);
-            System.out.println("login : " + login.toString());
             
             //username, password를 이용해서 UsernamePasswordAuthenticationToken 발급
             UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(login.getUsername(), login.getPassword());
             
-            System.out.println(authenticationToken.getPrincipal().toString());//username은 principal 이 되고
-            System.out.println(authenticationToken.getCredentials().toString());//password는 credentials가 된다.
+            log.info(authenticationToken.getPrincipal().toString());//username은 principal 이 되고
+            log.info(authenticationToken.getCredentials().toString());//password는 credentials가 된다.
             
             
             // 2. 1번에서 전달받은 로그인정보를 이용해서 생성한 토큰을 가지고 로그인이 유효한지 검증
@@ -117,13 +102,14 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         
         String username = principal.getUsername();
         
-        String accToken = tokenProvider.createToken(username);//엑세스토큰 생성
+        String accToken = tokenProvider.createToken(username);//엑세스토큰 생성하는 메서드
+                                                            // 만약 권한이나 다른것들도 넣어줘야하면 principal을 넘겨주는것으로 변경하지
         
-       
-        tokenProvider.refreshToken(principal); //리프레시 토큰 생성 맟 레디스 저장
-        System.out.println("token : " + "Bearer " + accToken);
         
-       log.info("==================response.addHeader 시작==================");
+        tokenProvider.refreshToken(username); //리프레시 토큰 생성 맟 레디스 저장
+        log.info("AccToken : " + "Bearer " + accToken);
+        
+        log.info("==================response.addHeader 시작==================");
         
         Cookie cookie = new Cookie(jwtYml.getHeader(), jwtYml.getPrefix() + accToken);
         cookie.setHttpOnly(true);//스크립트 상에서 접근이 불가능하도록 한다.
