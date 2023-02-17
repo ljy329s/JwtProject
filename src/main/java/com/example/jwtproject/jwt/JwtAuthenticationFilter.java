@@ -78,7 +78,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             
             PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
             
-            return authentication;//authentication을 반환하면 세션에 저장된다. 아마도 시큐리티 세션?
+            return authentication;//authentication을 반환하면 세션에 저장된다.
             
         } catch (IOException e) {
             e.printStackTrace();

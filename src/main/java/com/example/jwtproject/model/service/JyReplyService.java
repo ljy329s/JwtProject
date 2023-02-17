@@ -1,7 +1,6 @@
 package com.example.jwtproject.model.service;
 
 import com.example.jwtproject.model.domain.JyReply;
-import com.example.jwtproject.model.domain.PageHandle;
 import com.example.jwtproject.model.repository.JyReplyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

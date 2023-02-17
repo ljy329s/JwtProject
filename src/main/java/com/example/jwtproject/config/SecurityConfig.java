@@ -51,11 +51,11 @@ public class SecurityConfig {
                     //.anyRequest().authenticated()// 나머지 요청은 인증된 사람만 허용가능
                     .anyRequest().permitAll()//모든 권한 다 허용
                 .and()
-            .logout()
-            .logoutUrl("/logout")
-            .logoutSuccessUrl("/")
-            .deleteCookies("Authorization")
-            .and()
+                .logout()
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/")
+                .deleteCookies("Authorization")
+                .and()
             .build();
         
     }

@@ -4,7 +4,6 @@ package com.example.jwtproject.model.controller;
 import com.example.jwtproject.model.domain.JyAttach;
 import com.example.jwtproject.model.domain.JyBoard;
 import com.example.jwtproject.model.domain.JyReply;
-import com.example.jwtproject.model.domain.PageHandle;
 import com.example.jwtproject.model.service.JyAttachService;
 import com.example.jwtproject.model.service.JyBoardService;
 import com.example.jwtproject.model.service.JyReplyService;
