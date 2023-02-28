@@ -139,7 +139,7 @@ public class TokenProvider {
             
             Date after7dayFromToday = calendar.getTime();
             
-            System.out.println("리프레시 만료 기간" + expiresAt);
+            log.info("리프레시 만료 기간" + expiresAt);
             
             //7일이내 만료
             if (expiresAt.before(after7dayFromToday)) {
@@ -156,25 +156,49 @@ public class TokenProvider {
     /**
      * 쿠키에서 토큰을 꺼내는 메서드 쿠키에 저장된 엑세스토큰을 리턴한다
      */
+//    public String getTokenFromCookie(HttpServletRequest request, HttpServletResponse response) {
+//        Cookie[] cookies = request.getCookies();
+//        if (cookies != null) {//쿠키가 존재한다면
+//            for (Cookie c : cookies) {//쿠키를 꺼내는데
+//                if (c.getName().equals("Authorization") && c != null) {//쿠키중에 이름이  Authorization인것만 가져오기 + 비어있지 않을때
+//                    String acToken = c.getValue();//쿠키에 저장된 엑세스토큰
+//                    return acToken;
+//                }
+//            }
+//        } else {//쿠키가 존재하지 않는다면
+//            log.info("쿠키없음");
+//            return null;
+//        }
+//        return null;
+//    }
+
     public String getTokenFromCookie(HttpServletRequest request, HttpServletResponse response) {
+
         Cookie[] cookies = request.getCookies();
-        if (cookies != null) {//쿠키가 존재한다면
+        System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중1");
+        if (cookies!=null) {//쿠키가 존재한다면
+            System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중2");
             for (Cookie c : cookies) {//쿠키를 꺼내는데
+                System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중3");
                 if (c.getName().equals("Authorization") && c != null) {//쿠키중에 이름이  Authorization인것만 가져오기 + 비어있지 않을때
-                    String accToken = c.getValue();//쿠키에 저장된 엑세스토큰
-                    return accToken;
+                    System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중4");
+                    String acToken = c.getValue();//쿠키에 저장된 엑세스토큰
+                    return acToken;
                 }
             }
+            log.info("찾는 쿠키 없음");
+            System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중5");
         } else {//쿠키가 존재하지 않는다면
-            System.out.println("쿠키없음");
-            return null;
+            System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중6");
+            log.info("쿠키없음");
         }
+        System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중7");
         return null;
     }
     
     
     /**
-     * token 을 디코드 하여 username 을 반환하는 메서드
+     * token 을 디코드 하여 username 을 반환하는 메서드 DecodedJWT메서드 사용하면 만료된 토큰을 열어봐도 예외가 발생하지 않는다.
      */
     
     public String getNameFromToken(String token) {

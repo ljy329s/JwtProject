@@ -7,6 +7,7 @@ import com.example.jwtproject.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -25,15 +26,16 @@ public class SecurityConfig {
     
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     
+    
     @Bean
     public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    
+
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        
+
         return http
                     .httpBasic().disable()
                     .addFilter(corsConfig.corsFilter())
@@ -42,7 +44,7 @@ public class SecurityConfig {
                 .and()
                     .formLogin().disable()
                     .apply(authCustomFilter)
-                .and()
+            .and()
                     .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .and()
                     .authorizeRequests()
@@ -57,6 +59,8 @@ public class SecurityConfig {
                 .deleteCookies("Authorization")
                 .and()
             .build();
-        
+
     }
+    
+
 }

@@ -3,14 +3,17 @@ package com.example.jwtproject.jwt;
 import com.example.jwtproject.auth.PrincipalDetails;
 import com.example.jwtproject.common.JwtYml;
 import com.example.jwtproject.model.domain.Login;
+import com.example.jwtproject.model.service.RedisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -18,7 +21,11 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.Serializable;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * 로그인 요청이 오면 JwtAuthenticationFilter 에서 attemptAuthentication() 을 호출하여 인증처리
@@ -29,7 +36,7 @@ import java.time.Duration;
 
 @Slf4j
 @RequiredArgsConstructor
-public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {//UsernamePasswordAuthenticationFilter 로그인 인증을 처리하는 필터
+public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter implements Serializable {//UsernamePasswordAuthenticationFilter 로그인 인증을 처리하는 필터
     
     private final AuthenticationManager authenticationManager;
     
@@ -37,7 +44,11 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     
     private final TokenProvider tokenProvider;
     
+    private final RedisService redisService;
     
+    static final long serialVersionUID = 1L;
+    
+
     /**
      * /login 요청 하면 로그인 시도를 위해서 실행되는 메소드
      */
@@ -102,9 +113,32 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         
         String username = principal.getUsername();
         
-        String accToken = tokenProvider.createToken(username);//엑세스토큰 생성하는 메서드
-                                                            // 만약 권한이나 다른것들도 넣어줘야하면 principal을 넘겨주는것으로 변경하지
+        String roleList = principal.getMember().getRoleList().toString();
+        //레디스에 유저 권한 정보 보내기
+        redisService.setUserRole(username, roleList, jwtYml.getAccessTime());
         
+        
+        //레디스에서 유저 권한 조회하기 임시로 여기에 작성
+        //start
+        String roles = redisService.getUseRole(username);
+        String cleanRoles = roles.replaceAll("[ \\[ \\] ]", "");
+        
+        
+        int count = cleanRoles.length() - cleanRoles.replace(",", "").length();//특정 문자의 갯수
+        System.out.println("유저권한 조회" + cleanRoles);
+        String[] d = cleanRoles.split(",");
+        
+        for (int i = 0; i <= count; i++) {
+            System.out.println(",기준으로 " + d[i]);
+        }
+        //end
+        //
+        Stream<String> StringStream =Stream.of(d);
+    
+        System.out.println("StringStream : "+StringStream);
+        //
+        String accToken = tokenProvider.createToken(username);//엑세스토큰 생성하는 메서드
+        // 만약 권한이나 다른것들도 넣어줘야하면 principal을 넘겨주는것으로 변경하지
         
         tokenProvider.refreshToken(username); //리프레시 토큰 생성 맟 레디스 저장
         log.info("AccToken : " + "Bearer " + accToken);

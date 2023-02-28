@@ -5,6 +5,7 @@ import com.example.jwtproject.jwt.JwtAuthenticationFilter;
 import com.example.jwtproject.jwt.JwtAuthorizationFilter;
 import com.example.jwtproject.jwt.TokenProvider;
 import com.example.jwtproject.model.repository.MemberRepository;
+import com.example.jwtproject.model.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,12 +22,14 @@ public class AuthCustomFilter extends AbstractHttpConfigurer<AuthCustomFilter, H
     
     private final MemberRepository memberRepository;
     
+    private final RedisService redisService;
+    
 
     @Override
     public void configure(HttpSecurity http) throws Exception {
         AuthenticationManager authenticationManager = http.getSharedObject(AuthenticationManager.class);//꼭 넘겨야하는 파라미터 AuthenticationManger! 얘가 로그인을 진행하는 필터이기 때문
         http
-            .addFilter(new JwtAuthenticationFilter(authenticationManager, jwtYml, tokenProvider))//로그인 인증처리
+            .addFilter(new JwtAuthenticationFilter(authenticationManager, jwtYml, tokenProvider,redisService))//로그인 인증처리
             .addFilter(new JwtAuthorizationFilter(authenticationManager , memberRepository, jwtYml, tokenProvider));//인증 + 인가처리
        
     }
