@@ -5,11 +5,13 @@ import com.example.jwtproject.filter.AuthCustomFilter;
 import com.example.jwtproject.jwt.JwtAuthenticationEntryPoint;
 import com.example.jwtproject.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -49,7 +51,7 @@ public class SecurityConfig {
                 .and()
                     .authorizeRequests()
                     .antMatchers("/test").authenticated()
-                    .antMatchers("/", "/reissue", "/member/**", "/user/**", "/jyHome").permitAll()
+                    .antMatchers("/", "/member/**", "/user/**", "/jyHome").permitAll()
                     //.anyRequest().authenticated()// 나머지 요청은 인증된 사람만 허용가능
                     .anyRequest().permitAll()//모든 권한 다 허용
                 .and()
@@ -58,9 +60,15 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/")
                 .deleteCookies("Authorization")
                 .and()
+            
             .build();
 
     }
     
-
+    @Bean
+    public WebSecurityCustomizer configure(){ // 시큐리티의 적용에서 제외할것들
+        return (web) -> web.ignoring().mvcMatchers(
+            "/","/member/failLoginForm","/member/loginForm"
+        );
+    }
 }

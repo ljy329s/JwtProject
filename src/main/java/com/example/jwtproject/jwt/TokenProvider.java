@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletWebRequest;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -40,13 +42,22 @@ public class TokenProvider {
      */
     
     @Transactional
-    public String createToken(String username) {
+    public String createToken(String username, HttpServletResponse response) {
         System.out.println("엑세스토큰생성");
         String token = JWT.create()
             .withSubject("Jwt_accessToken")
             .withExpiresAt(new Date(System.currentTimeMillis() + jwtYml.getAccessTime()))//만료시간 2분
             .withClaim("username", username)
             .sign(Algorithm.HMAC256(jwtYml.getSecretKey()));
+        
+        log.info("========== cookie 에 엑세스 토큰 저장 ==========");
+        
+        Cookie cookie = new Cookie(jwtYml.getHeader(), jwtYml.getPrefix() + token);
+        cookie.setHttpOnly(true);//스크립트 상에서 접근이 불가능하도록 한다.
+        //cookie.setSecure(true);//패킷감청을 막기 위해서 https 통신시에만 해당 쿠키를 사용하도록 한다.
+        cookie.setPath("/");//쿠키경로 설정 모든경로에서 "/" 사용하겠다
+        cookie.setMaxAge(60 * 60 * 24);//쿠키 만료시간 하루
+        response.addCookie(cookie);
         return token;
     }
     
@@ -69,7 +80,7 @@ public class TokenProvider {
      */
     
     public boolean isExpiredAccToken(String jwtToken) {
-        String npToken = jwtToken.replace(jwtYml.getPrefix(), "");//헤더제거
+        String npToken = jwtToken.replace(jwtYml.getPrefix(), "");//prefix 제거
         
         Date now = new Date();
         try {
@@ -95,28 +106,21 @@ public class TokenProvider {
      * 리프레시 토큰의 만료여부를 확인하는 토큰 레디스에 존재하면 아직 만료기간 안지난거니까
      */
     
-    public void isExpiredRefToken(String username, HttpServletResponse response) {
-        System.out.println("리프레시 토큰의 만료여부를 확인하는 메서드 isExpiredRefToken()");
-        try {
-            if (redisService.getRefreshToken(username) != null) {//리프레시 토큰이 존재한다면
-                System.out.println("리프레시 토큰 존재 만료기간 확인");
-                if (checkRefreshToken(username)) {//리프레시 토큰의 만료기간 확인 7일전이라면
-                    log.info("리프레시 토큰 만료 7일전 리프레시토큰 재생성");
-                    refreshToken(username);//리프레시 토큰 생성
-                    createToken(username);//엑세스토큰 생성
-                } else {
-                    log.info("리프레시토큰 만료일 7일이상 엑세스토큰만 재발급");
-                    createToken(username);
-                }
-            } else {
-                log.info("리프레시 토큰이 없습니당 재로그인 요청1");
-                response.sendRedirect("/logout");
-                
-            }
-        } catch (TokenExpiredException | IOException e) {
-            System.out.println(e.getMessage());
-            log.info("리프레시 토큰이 없습니당 재로그인 요청2");
+    public boolean isExpiredRefToken(String username, HttpServletResponse response) {
+        log.info("리프레시 토큰의 만료여부를 확인하는 메서드 isExpiredRefToken()");
+        
+        if (redisService.getRefreshToken(username) == null) {//리프레시 토큰이 만료라면
+            log.info("refreshToken이 만료됐습니다");
+            return false;
         }
+        //리프레시 토큰이 만료가 아니라면
+        if (checkRefreshToken(username)) {//리프레시 토큰의 만료기간 확인 7일전이라면
+            refreshToken(username);//리프레시 토큰 생성
+            log.info("RefreshToken 생성");
+        }
+        createToken(username, response); //엑세스토큰 생성
+        log.info("AccessToken 생성");
+        return true;
     }
     
     /**
@@ -125,11 +129,10 @@ public class TokenProvider {
     
     public boolean checkRefreshToken(String username) {
         try {
-            
             String token = redisService.getRefreshToken(username);
             Date expiresAt = JWT.require(Algorithm.HMAC256(jwtYml.getSecretKey()))
                 .build()
-                .verify(token)//verify는 만료된 토큰을 예외로 던져준다.
+                .verify(token)//verify는 토큰이 만료되면 예외로 던짐
                 .getExpiresAt();
             
             Date current = new Date(System.currentTimeMillis());
@@ -138,7 +141,6 @@ public class TokenProvider {
             calendar.add(Calendar.MILLISECOND, 120000);//임시 2분.  7일 남았을때로 해주기 변경 Calendar.DATE
             
             Date after7dayFromToday = calendar.getTime();
-            
             log.info("리프레시 만료 기간" + expiresAt);
             
             //7일이내 만료
@@ -147,7 +149,7 @@ public class TokenProvider {
                 return true;
             }
         } catch (TokenExpiredException e) {
-            return true;
+            return false;
         }
         return false;
         
@@ -156,43 +158,18 @@ public class TokenProvider {
     /**
      * 쿠키에서 토큰을 꺼내는 메서드 쿠키에 저장된 엑세스토큰을 리턴한다
      */
-//    public String getTokenFromCookie(HttpServletRequest request, HttpServletResponse response) {
-//        Cookie[] cookies = request.getCookies();
-//        if (cookies != null) {//쿠키가 존재한다면
-//            for (Cookie c : cookies) {//쿠키를 꺼내는데
-//                if (c.getName().equals("Authorization") && c != null) {//쿠키중에 이름이  Authorization인것만 가져오기 + 비어있지 않을때
-//                    String acToken = c.getValue();//쿠키에 저장된 엑세스토큰
-//                    return acToken;
-//                }
-//            }
-//        } else {//쿠키가 존재하지 않는다면
-//            log.info("쿠키없음");
-//            return null;
-//        }
-//        return null;
-//    }
-
     public String getTokenFromCookie(HttpServletRequest request, HttpServletResponse response) {
-
+        
         Cookie[] cookies = request.getCookies();
-        System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중1");
-        if (cookies!=null) {//쿠키가 존재한다면
-            System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중2");
-            for (Cookie c : cookies) {//쿠키를 꺼내는데
-                System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중3");
+        if (cookies != null) {//쿠키가 존재한다면
+            for (Cookie c : cookies) {
                 if (c.getName().equals("Authorization") && c != null) {//쿠키중에 이름이  Authorization인것만 가져오기 + 비어있지 않을때
-                    System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중4");
                     String acToken = c.getValue();//쿠키에 저장된 엑세스토큰
                     return acToken;
                 }
             }
-            log.info("찾는 쿠키 없음");
-            System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중5");
-        } else {//쿠키가 존재하지 않는다면
-            System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중6");
-            log.info("쿠키없음");
         }
-        System.out.println("getTokenFromCookie 에서 쿠키 꺼내는중7");
+        log.info("쿠키가 존재하지 않습니다");
         return null;
     }
     
@@ -208,10 +185,9 @@ public class TokenProvider {
             DecodedJWT decodedJwt = JWT.decode(npToken);//decode() 메서드는 토큰의 만료를 확인하지 않으므로 토큰이 만료된 경우에도 사용자 이름을 반환한다.
             String username = decodedJwt.getClaim("username").asString();
             return username;
-        } else {
-            return null;
         }
+        return null;
     }
 }
-    
+
 

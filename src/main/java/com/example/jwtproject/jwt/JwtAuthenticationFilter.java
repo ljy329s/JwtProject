@@ -7,13 +7,11 @@ import com.example.jwtproject.model.service.RedisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.stereotype.Component;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -22,10 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Serializable;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * 로그인 요청이 오면 JwtAuthenticationFilter 에서 attemptAuthentication() 을 호출하여 인증처리
@@ -55,11 +49,16 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         
+        log.info("=========로그인시도시 쿠키 삭제=========");//쿠키삭제를 해주지 않으니까 로그인을 실패해도 넘어가버린당..ㅠ
+        Cookie delCookie = new Cookie("Authorization",null);
+        delCookie.setMaxAge(0);
+        response.addCookie(delCookie);
+
         log.info("로그인시도");
         ObjectMapper om = new ObjectMapper();
         
         try {
-            //1.유저가 입력한 username,password 를 받는다.
+            //유저가 입력한 username,password 를 받는다.
             //request 로 넘어오는 username, password 를 받아서 로그인요청 객체를 생성후
             //Authenticate 를 위한 UserPasswordAuthenticationToken 을 발행한다.
             
@@ -74,7 +73,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             
             
             // 2. 1번에서 전달받은 로그인정보를 이용해서 생성한 토큰을 가지고 로그인이 유효한지 검증
-            // 회원의 존재여부가 존재일때 해당토큰의 (principal == username && credentials == password) 검증하면된다.
+            // 회원조회후 존재할때 해당토큰 검증하면된다.(principal == username && credentials == password)
             // 패스워드를 비교하는 로직은 시큐리티 내부에서 검증하기에 따로 작성하지 않아도 된다.
             // id 와 pw가 일치하면 알아서 authentication 을 반환해주고 , 아니라면 연결종료시킴
             //authenticationManager클래스의 authenticate()에 토큰을 넘기면 자동으로
@@ -84,8 +83,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             Authentication authentication =
                 authenticationManager.authenticate(authenticationToken);//authenticate(Authentication) : 인증의 전반적인 관리
             //3.로그인 성공 확인
-            System.out.println("3. 로그인 성공?확인중");
-            
+            System.out.println("3. 로그인 성공여부 확인중");
             
             PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
             
@@ -106,7 +104,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult)
         throws IOException, ServletException {
-        log.info("로그인 성공시 작동하는 메서드 JwtAuthenticationFilter 의 successfulAuthentication");
+        log.info("=========== 로그인 성공시 동작 : JwtAuthenticationFilter 의 successfulAuthentication() ===========");
         //---  super.successfulAuthentication(request, response, chain, authResult);
         
         PrincipalDetails principal = ((PrincipalDetails) authResult.getPrincipal());
@@ -116,7 +114,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String roleList = principal.getMember().getRoleList().toString();
         //레디스에 유저 권한 정보 보내기
         redisService.setUserRole(username, roleList, jwtYml.getAccessTime());
-        
+        redisService.setUserDate(username, principal, jwtYml.getAccessTime());
         
         //레디스에서 유저 권한 조회하기 임시로 여기에 작성
         //start
@@ -132,25 +130,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             System.out.println(",기준으로 " + d[i]);
         }
         //end
-        //
-        Stream<String> StringStream =Stream.of(d);
-    
-        System.out.println("StringStream : "+StringStream);
-        //
-        String accToken = tokenProvider.createToken(username);//엑세스토큰 생성하는 메서드
+        //이렇게 조회한 권한 이름 등등의 정보를 레디스에 넣어야함
+        String accToken = tokenProvider.createToken(username,response);//엑세스토큰 생성하는 메서드
         // 만약 권한이나 다른것들도 넣어줘야하면 principal을 넘겨주는것으로 변경하지
         
         tokenProvider.refreshToken(username); //리프레시 토큰 생성 맟 레디스 저장
         log.info("AccToken : " + "Bearer " + accToken);
-        
-        log.info("==================response.addHeader 시작==================");
-        
-        Cookie cookie = new Cookie(jwtYml.getHeader(), jwtYml.getPrefix() + accToken);
-        cookie.setHttpOnly(true);//스크립트 상에서 접근이 불가능하도록 한다.
-        //cookie.setSecure(true);//패킷감청을 막기 위해서 https 통신시에만 해당 쿠키를 사용하도록 한다.
-        cookie.setPath("/");//쿠키경로 설정 모든경로에서 "/" 사용하겠다
-        //cookie.setMaxAge(60 * 2);//초단위로 설정됨 yml에 설정한 엑세스토큰의 만료시간인 120000 즉 2분으로 설정
-        response.addCookie(cookie);
         
     }
     
@@ -161,8 +146,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      */
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
-        log.info("로그인실패 unsuccessfulAuthentication 메서드 진입");
-        super.unsuccessfulAuthentication(request, response, failed);
-        
+        log.info("=========== 로그인 실패시 동작 : JwtAuthenticationFilter 의 unsuccessfulAuthentication ===========");
+        response.sendRedirect("/member/failLoginForm");
     }
 }

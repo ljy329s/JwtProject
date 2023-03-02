@@ -25,7 +25,7 @@ public class PrincipalDetailsService implements UserDetailsService {
             log.info("유저 없음");
             return null;
         }
-        log.info("해당 유저 존재");
+        log.info("해당 아이디 존재");
         
         return new PrincipalDetails(member);
     }

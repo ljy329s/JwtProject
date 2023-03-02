@@ -1,5 +1,6 @@
 package com.example.jwtproject.model.service;
 
+import com.example.jwtproject.auth.PrincipalDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -7,9 +8,6 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**
@@ -29,10 +27,10 @@ public class RedisService {
     }
     
     
-    //레디스에서 특정 유효시간 동안만 저장되도록 함
+    //리프레시 토큰을 레디스에서 특정 유효시간 동안만 저장되도록 함
     public void setRefreshToken(String key, String value, long duration) {
         ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
-        Duration expireDuration = Duration.ofMillis(12000);
+        Duration expireDuration = Duration.ofMillis(duration);//24초
         valueOperations.set(key, value, expireDuration);
     }
     
@@ -77,12 +75,52 @@ public class RedisService {
         ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
         String roleKey = prefix + key;
         roles = valueOperations.get(roleKey);
-       
-        if (roles!=null) {
+        
+        if (roles != null) {
             System.out.println(roles);
             return roles;
         }
         return null;
     }
     
+    
+    /**
+     * 유저의 정보 저장
+     *
+     */
+    
+    public void setUserDate(String username, PrincipalDetails principal, long accessTime) {
+    
+        System.out.println("username: "+username);
+        System.out.println("principal: "+principal.getMember().getName());
+    
+        System.out.println("principal: "+principal.getMember().getUserPhone());
+    
+        System.out.println("principal: "+principal.getMember().getUserEmail().toString());
+    }
 }
+
+ 
+ 
+ /**
+ * 레디스에 저장할것
+ * 유저의 데이터 username을 키로해서 list나 map으로
+ * 유저의 권한목록 Role_username을 키로해서
+ * 리프레시 토큰 Ref_username
+ * <p>
+ * 목록을 담는 방법
+ * redisTemplate.opsForValue().set("username", "usernameValue");
+ * redisTemplate.opsForValue().set("password", "passwordValue");
+ */
+
+/**
+ * 레디스에 저장할것
+ * 유저의 데이터 username을 키로해서 list나 map으로
+ * 유저의 권한목록 Role_username을 키로해서
+ * 리프레시 토큰 Ref_username
+ *
+ * 목록을 담는 방법
+ redisTemplate.opsForValue().set("username", "usernameValue");
+ redisTemplate.opsForValue().set("password", "passwordValue");
+ 
+ */
