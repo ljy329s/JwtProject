@@ -33,7 +33,6 @@ public class SecurityConfig {
     public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -46,27 +45,25 @@ public class SecurityConfig {
                 .and()
                     .formLogin().disable()
                     .apply(authCustomFilter)
-            .and()
+                .and()
                     .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .and()
                     .authorizeRequests()
                     .antMatchers("/test").authenticated()
-                    .antMatchers("/", "/member/**", "/user/**", "/jyHome").permitAll()
-                    //.anyRequest().authenticated()// 나머지 요청은 인증된 사람만 허용가능
+                    .antMatchers("/", "/member/**", "/user/**", "/jyHome","/selectUserData","/selectUserRoles").permitAll()
                     .anyRequest().permitAll()//모든 권한 다 허용
                 .and()
-                .logout()
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/")
-                .deleteCookies("Authorization")
+                    .logout()
+                    .logoutUrl("/logout")
+                    .logoutSuccessUrl("/")
+                    .deleteCookies("Authorization")
                 .and()
-            
             .build();
 
     }
     
     @Bean
-    public WebSecurityCustomizer configure(){ // 시큐리티의 적용에서 제외할것들
+    public WebSecurityCustomizer configure(){ // 시큐리티의 적용에서 제외할것들(필터를 타지 않게 하려는것들 등록)
         return (web) -> web.ignoring().mvcMatchers(
             "/","/member/failLoginForm","/member/loginForm"
         );

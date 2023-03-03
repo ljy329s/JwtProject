@@ -19,6 +19,8 @@ server:
 mybatis:
   type-aliases-package: com.example.jwtproject.model.domain
   mapper-locations: mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
 
 jwt:
   header: Authorization
@@ -26,11 +28,14 @@ jwt:
   prefix: Bearer
   access-time: 12000
   refresh-time: 24000
+  refresh-alarm: 12000
 #  refresh-time: 1814400000
 
 redis:
   host: localhost
   port: 6379
+  reKey: ReT_
+  roleKey: Role_
 
 #엑세스토큰 2분, 리프레시토큰 3주
 

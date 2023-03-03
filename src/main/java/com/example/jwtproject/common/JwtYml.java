@@ -23,6 +23,8 @@ public class JwtYml {
     
     private final long refreshTime;
     
+    private final int refreshAlarm;
+    
     //base64로 인코딩
     public String getSecretKey() {
         String secretKey = Base64.getEncoder().encodeToString(this.secretKey.getBytes());

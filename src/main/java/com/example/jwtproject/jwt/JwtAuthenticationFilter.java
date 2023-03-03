@@ -42,44 +42,42 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     
     static final long serialVersionUID = 1L;
     
-
+    
     /**
      * /login 요청 하면 로그인 시도를 위해서 실행되는 메소드
      */
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         
-        log.info("=========로그인시도시 쿠키 삭제=========");//쿠키삭제를 해주지 않으니까 로그인을 실패해도 넘어가버린당..ㅠ
-        Cookie delCookie = new Cookie("Authorization",null);
+        log.info("=========로그인시도시 쿠키 삭제=========");
+        Cookie delCookie = new Cookie("Authorization", null);
         delCookie.setMaxAge(0);
         response.addCookie(delCookie);
-
+        
         log.info("로그인시도");
         ObjectMapper om = new ObjectMapper();
         
         try {
-            //유저가 입력한 username,password 를 받는다.
-            //request 로 넘어오는 username, password 를 받아서 로그인요청 객체를 생성후
+            //유저가 입력한 username,password 를 받는다. request 로 넘어오는 username, password 를 받아서 로그인요청 객체를 생성후
             //Authenticate 를 위한 UserPasswordAuthenticationToken 을 발행한다.
             
             Login login = om.readValue(request.getInputStream(), Login.class);
             
-            //username, password를 이용해서 UsernamePasswordAuthenticationToken 발급
             UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(login.getUsername(), login.getPassword());
             
             log.info(authenticationToken.getPrincipal().toString());//username은 principal 이 되고
             log.info(authenticationToken.getCredentials().toString());//password는 credentials가 된다.
             
-            
-            // 2. 1번에서 전달받은 로그인정보를 이용해서 생성한 토큰을 가지고 로그인이 유효한지 검증
+            // 전달받은 로그인정보를 이용해서 생성한 토큰 => 가지고 로그인이 유효한지 검증
             // 회원조회후 존재할때 해당토큰 검증하면된다.(principal == username && credentials == password)
             // 패스워드를 비교하는 로직은 시큐리티 내부에서 검증하기에 따로 작성하지 않아도 된다.
-            // id 와 pw가 일치하면 알아서 authentication 을 반환해주고 , 아니라면 연결종료시킴
-            //authenticationManager클래스의 authenticate()에 토큰을 넘기면 자동으로
-            //UserDetailsService.class 의 loadUserByUsername() 메소드가 실행된다.
+            // id 와 pw가 일치하면 알아서 authentication을 반환해주고 아니라면 연결종료시킴
             
             System.out.println("============== 로그인 검증 시작 ===============");
+            
+            // authenticationManager클래스의 authenticate()에 토큰을 넘기면 자동으로
+            // UserDetailsService.class의 loadUserByUsername() 메소드가 실행된다.
             Authentication authentication =
                 authenticationManager.authenticate(authenticationToken);//authenticate(Authentication) : 인증의 전반적인 관리
             //3.로그인 성공 확인
@@ -105,37 +103,24 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult)
         throws IOException, ServletException {
         log.info("=========== 로그인 성공시 동작 : JwtAuthenticationFilter 의 successfulAuthentication() ===========");
-        //---  super.successfulAuthentication(request, response, chain, authResult);
         
         PrincipalDetails principal = ((PrincipalDetails) authResult.getPrincipal());
         
         String username = principal.getUsername();
         
         String roleList = principal.getMember().getRoleList().toString();
+        System.out.println("roleList : " + principal.getMember().getRoleList());
         //레디스에 유저 권한 정보 보내기
         redisService.setUserRole(username, roleList, jwtYml.getAccessTime());
         redisService.setUserDate(username, principal, jwtYml.getAccessTime());
         
         //레디스에서 유저 권한 조회하기 임시로 여기에 작성
-        //start
-        String roles = redisService.getUseRole(username);
-        String cleanRoles = roles.replaceAll("[ \\[ \\] ]", "");
+        redisService.getUseRole(username);
         
+        String accToken = tokenProvider.createToken(username, response);//엑세스토큰 생성하는 메서드
         
-        int count = cleanRoles.length() - cleanRoles.replace(",", "").length();//특정 문자의 갯수
-        System.out.println("유저권한 조회" + cleanRoles);
-        String[] d = cleanRoles.split(",");
-        
-        for (int i = 0; i <= count; i++) {
-            System.out.println(",기준으로 " + d[i]);
-        }
-        //end
-        //이렇게 조회한 권한 이름 등등의 정보를 레디스에 넣어야함
-        String accToken = tokenProvider.createToken(username,response);//엑세스토큰 생성하는 메서드
-        // 만약 권한이나 다른것들도 넣어줘야하면 principal을 넘겨주는것으로 변경하지
-        
-        tokenProvider.refreshToken(username); //리프레시 토큰 생성 맟 레디스 저장
-        log.info("AccToken : " + "Bearer " + accToken);
+        tokenProvider.refreshToken(username); //리프레시 토큰 생성 및 레디스 저장
+        log.info(jwtYml.getHeader() + " " + jwtYml.getPrefix() + accToken);
         
     }
     

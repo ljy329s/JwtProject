@@ -43,7 +43,7 @@ public class TokenProvider {
     
     @Transactional
     public String createToken(String username, HttpServletResponse response) {
-        System.out.println("엑세스토큰생성");
+        log.info("엑세스토큰생성");
         String token = JWT.create()
             .withSubject("Jwt_accessToken")
             .withExpiresAt(new Date(System.currentTimeMillis() + jwtYml.getAccessTime()))//만료시간 2분
@@ -90,8 +90,9 @@ public class TokenProvider {
                 .getExpiresAt();
             log.info("지금시간 : " + now);
             log.info("엑세스토큰의 만료시간 : " + expiresAt);
+            
             if (now.before(expiresAt)) {//현재시간이 만료시간보다 이전이라면
-                System.out.println("만료전");
+                log.info("만료전");
                 return false;
             }
         } catch (TokenExpiredException e) {
@@ -138,14 +139,13 @@ public class TokenProvider {
             Date current = new Date(System.currentTimeMillis());
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(current);
-            calendar.add(Calendar.MILLISECOND, 120000);//임시 2분.  7일 남았을때로 해주기 변경 Calendar.DATE
-            
+            calendar.add(Calendar.MILLISECOND, jwtYml.getRefreshAlarm());//임시 2분.  7일 남았을때로 해주기 변경 Calendar.DATE
             Date after7dayFromToday = calendar.getTime();
             log.info("리프레시 만료 기간" + expiresAt);
             
             //7일이내 만료
             if (expiresAt.before(after7dayFromToday)) {
-                System.out.println("리프레시토큰 7일이내 만료");
+                log.info("리프레시토큰 7일이내 만료");
                 return true;
             }
         } catch (TokenExpiredException e) {
@@ -158,7 +158,7 @@ public class TokenProvider {
     /**
      * 쿠키에서 토큰을 꺼내는 메서드 쿠키에 저장된 엑세스토큰을 리턴한다
      */
-    public String getTokenFromCookie(HttpServletRequest request, HttpServletResponse response) {
+    public String getTokenFromCookie(HttpServletRequest request) {
         
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {//쿠키가 존재한다면

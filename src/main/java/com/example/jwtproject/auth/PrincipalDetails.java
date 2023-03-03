@@ -36,7 +36,6 @@ public class PrincipalDetails implements UserDetails, Serializable {
         return authorities;
     }
     
-    
     public Member getMember() {
         return this.member;
     }

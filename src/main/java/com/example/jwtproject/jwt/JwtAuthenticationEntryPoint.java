@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * 토큰인증이 실패할때 핸들링하는 AuthenticationEntryPoint 구현
+ * 인가가 실패했을때 실행도니다. (로그인하지 않은 사용자가 접근)
  */
 
 @Slf4j
@@ -21,8 +21,10 @@ import java.io.IOException;
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        System.out.println("!에러발생");
-    log.info("JwtAuthenticationEntryPoint 의 commence ==> 예외발생");
-    
+        
+        log.info("JwtAuthenticationEntryPoint 의 commence ==> 예외발생");
+        response.setCharacterEncoding("utf-8");
+        response.sendError(401, "잘못된 접근입니다.");
+        
     }
 }

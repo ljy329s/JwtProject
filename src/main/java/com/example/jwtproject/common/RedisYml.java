@@ -15,4 +15,8 @@ public class RedisYml {
     
     private final Integer port;
     
+    private final String reKey;
+    
+    private final String roleKey;
+    
 }
