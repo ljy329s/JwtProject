@@ -50,7 +50,7 @@ public class SecurityConfig {
                 .and()
                     .authorizeRequests()
                     .antMatchers("/test").authenticated()
-                    .antMatchers("/", "/member/**", "/user/**", "/jyHome","/selectUserData","/selectUserRoles").permitAll()
+                    .antMatchers("/", "/member/**", "/user/**", "/jyHome","/selectUserData","/selectUserRoles","/selectUserDB").permitAll()
                     .anyRequest().permitAll()//모든 권한 다 허용
                 .and()
                     .logout()

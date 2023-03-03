@@ -1,6 +1,8 @@
 package com.example.jwtproject.model.controller;
 
+import com.example.jwtproject.model.repository.MemberRepository;
 import com.example.jwtproject.model.service.RedisService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +17,8 @@ import java.util.Map;
 public class MainController {
     
     private final RedisService redisService;
+    
+    private final MemberRepository memberRepository;
     
     @RequestMapping(method = {RequestMethod.GET,RequestMethod.POST},value="/")
     public String Main() {
@@ -48,12 +52,29 @@ public class MainController {
      */
     @PostMapping("/selectUserData")
     public void selectUserData(@RequestBody Map<String, String> data) {
+        long beforeTime = System.currentTimeMillis(); //코드 실행 전에 시간 받아오기
         System.out.println("==========레디스에서 유저정보 조회===========");
         String data1 = redisService.getUserDate(data.get("username"), data.get("filed"));
         System.out.println("=== userData ===" + data1);
+        long afterTime = System.currentTimeMillis(); // 코드 실행 후에 시간 받아오기
+        long secDiffTime = (afterTime - beforeTime); //두 시간에 차 계산
+        System.out.println("시간차이(m) : "+secDiffTime);
     }
     
-    /**
+    @PostMapping("/selectUserDB")
+    public void selectUserDB(@RequestBody Map<String, String> data) {
+    
+        long beforeTime = System.currentTimeMillis(); //코드 실행 전에 시간 받아오기
+        System.out.println("==========DB에서 유저정보 조회===========");
+       String username=data.get("username");
+        String data1 = memberRepository.selectUserDB(username);
+        System.out.println("=== userData ===" + data1);
+        long afterTime = System.currentTimeMillis(); // 코드 실행 후에 시간 받아오기
+        long secDiffTime = (afterTime - beforeTime); //두 시간에 차 계산
+        System.out.println("시간차이(m) : "+secDiffTime);
+    }
+    
+    /**이
      * 레디스에서 user의 권한확인
      */
     @PostMapping("/selectUserRoles")

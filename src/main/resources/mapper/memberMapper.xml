@@ -29,4 +29,12 @@
           AND  del_yn = 'N'
     </select>
 
+    <select id="selectUserDB" parameterType="string" resultType="string">
+        SELECT
+               name
+        FROM   member
+        WHERE  username = #{username}
+          AND  del_yn = 'N'
+    </select>
+
 </mapper>
