@@ -25,6 +25,14 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         log.info("JwtAuthenticationEntryPoint 의 commence ==> 예외발생");
         response.setCharacterEncoding("utf-8");
         response.sendError(401, "잘못된 접근입니다.");
-        
+    
+    
+        /**
+         * JWT Exception 종류
+         * ExpiredJwtException : JWT를 생성할 때 지정한 유효기간 초과할 때.
+         * UnsupportedJwtException : 예상하는 형식과 일치하지 않는 특정 형식이나 구성의 JWT일 때
+         * MalformedJwtException : JWT가 올바르게 구성되지 않았을 때
+         * SignatureException :  JWT의 기존 서명을 확인하지 못했을 때
+         */
     }
 }
