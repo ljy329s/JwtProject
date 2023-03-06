@@ -20,7 +20,7 @@ public class MainController {
     
     private final MemberRepository memberRepository;
     
-    @RequestMapping(method = {RequestMethod.GET,RequestMethod.POST},value="/")
+    @RequestMapping(method = {RequestMethod.GET, RequestMethod.POST}, value = "/")
     public String Main() {
         return "<h1>메인화면입니다</h1>";
     }
@@ -58,31 +58,31 @@ public class MainController {
         System.out.println("=== userData ===" + data1);
         long afterTime = System.currentTimeMillis(); // 코드 실행 후에 시간 받아오기
         long secDiffTime = (afterTime - beforeTime); //두 시간에 차 계산
-        System.out.println("시간차이(m) : "+secDiffTime);
+        System.out.println("시간차이(m) : " + secDiffTime);
     }
     
     @PostMapping("/selectUserDB")
     public void selectUserDB(@RequestBody Map<String, String> data) {
-    
+        
         long beforeTime = System.currentTimeMillis(); //코드 실행 전에 시간 받아오기
         System.out.println("==========DB에서 유저정보 조회===========");
-       String username=data.get("username");
+        String username = data.get("username");
         String data1 = memberRepository.selectUserDB(username);
         System.out.println("=== userData ===" + data1);
         long afterTime = System.currentTimeMillis(); // 코드 실행 후에 시간 받아오기
-        long secDiffTime = (afterTime - beforeTime); //두 시간에 차 계산
-        System.out.println("시간차이(m) : "+secDiffTime);
+        long secDifTime = (afterTime - beforeTime); //두 시간에 차 계산
+        System.out.println("시간차이(m) : " + secDifTime);
     }
     
-    /**이
+    /**
      * 레디스에서 user의 권한확인
      */
     @PostMapping("/selectUserRoles")
-    public void selectUserRoles(@RequestBody Map<String,String> data) {
+    public void selectUserRoles(@RequestBody Map<String, String> data) {
         System.out.println("==========레디스에서 유저정보 조회===========");
         
         String data1 = redisService.getUseRole(data.get("username"));
-        System.out.println("=== userRole === " + data1);
+        System.out.println(" === userRole === " + data1);
         
     }
 }

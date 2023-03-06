@@ -11,13 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletWebRequest;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -83,23 +80,22 @@ public class TokenProvider {
         String npToken = jwtToken.replace(jwtYml.getPrefix(), "");//prefix 제거
         
         Date now = new Date();
+        Date expiresAt = new Date();
         try {
-            Date expiresAt = require(Algorithm.HMAC256(jwtYml.getSecretKey()))
+            expiresAt = require(Algorithm.HMAC256(jwtYml.getSecretKey()))
                 .build()
                 .verify(npToken)
                 .getExpiresAt();
             log.info("지금시간 : " + now);
             log.info("엑세스토큰의 만료시간 : " + expiresAt);
-            
-            if (now.before(expiresAt)) {//현재시간이 만료시간보다 이전이라면
-                log.info("만료전");
-                return false;
-            }
         } catch (TokenExpiredException e) {
             log.info("만료된 토큰입니다.");
-            return true;
         }
-        return false;
+        if (now.before(expiresAt)) {//현재시간이 만료시간보다 이전이라면
+            log.info("만료전");
+            return false;
+        }
+        return true;
         
     }
     
@@ -117,7 +113,6 @@ public class TokenProvider {
         //리프레시 토큰이 만료가 아니라면
         if (checkRefreshToken(username)) {//리프레시 토큰의 만료기간 확인 7일전이라면
             refreshToken(username);//리프레시 토큰 생성
-            log.info("RefreshToken 생성");
         }
         createToken(username, response); //엑세스토큰 생성
         log.info("AccessToken 생성");
@@ -175,7 +170,7 @@ public class TokenProvider {
     
     
     /**
-     * token 을 디코드 하여 username 을 반환하는 메서드 DecodedJWT메서드 사용하면 만료된 토큰을 열어봐도 예외가 발생하지 않는다.
+     * token을 디코드 하여 username을 반환하는 메서드
      */
     
     public String getNameFromToken(String token) {

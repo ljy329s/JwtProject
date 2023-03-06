@@ -63,13 +63,13 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
          */
         String username = tokenProvider.getNameFromToken(acToken);//토큰에서 이름 꺼내기
         
-        //엑세스 토큰이 만료가 아니라면 동작
-        if (!tokenProvider.isExpiredAccToken(acToken)) {
+        boolean accEx = tokenProvider.isExpiredAccToken(acToken);
+        
+        if (!accEx) { //엑세스 토큰이 만료가 아니라면 동작
             System.out.println("acToken : " + acToken);
         }
         
-        //엑세스 토큰이 만료라면 동작
-        if (tokenProvider.isExpiredAccToken(acToken)) {
+        if (accEx) {//(tokenProvider.isExpiredAccToken(acToken)) {//엑세스 토큰이 만료라면 동작
             log.info("========= 엑세스 토큰 만료! 리프레시 토큰의 만료여부 확인 =========");
             boolean refEx = tokenProvider.isExpiredRefToken(username, response);//리프레시 토큰의 존재여부
             
@@ -93,11 +93,8 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         //정상적인 사용자인지, 권한이 있는지 확인
         Member member = memberRepository.selectMember(username);
         PrincipalDetails principalDetails = new PrincipalDetails(member);
-        
         Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
-        
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        
         chain.doFilter(request, response);
     }
 }

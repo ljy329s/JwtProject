@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * 인가가 실패했을때 실행도니다. (로그인하지 않은 사용자가 접근)
+ * 인가가 실패했을때 실행된다. (로그인하지 않은 사용자가 접근)
  */
 
 @Slf4j
