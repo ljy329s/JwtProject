@@ -42,13 +42,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         
         /**
-         엑세스 토큰이 담겨있는 쿠키의 존재여부를 확인
-         */
-        
-        log.info("쿠키의 존재여부 확인");
-        
-        /**
-         * 쿠키가 없을때 동작 쿠키가 없으면 종료
+         * 엑세스 토큰이 담겨있는 쿠키의 존재여부를 확인 없으면 종료
          */
         String acToken = "";
         acToken = tokenProvider.getTokenFromCookie(request);
@@ -66,22 +60,23 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         boolean accEx = tokenProvider.isExpiredAccToken(acToken);//엑세스토큰 만료여부 확인
         
         if (!accEx) { //엑세스 토큰이 만료가 아니라면 동작
-            System.out.println("acToken : " + acToken);
+            log.info("엑세스토큰 : " + acToken);
         }
         
-        if (accEx) {//(tokenProvider.isExpiredAccToken(acToken)) {//엑세스 토큰이 만료라면 동작
+        boolean refEx = false;
+        //엑세스 토큰이 만료라면 동작
+        if (accEx) {
             log.info("========= 엑세스 토큰 만료! 리프레시 토큰의 만료여부 확인 =========");
-            boolean refEx = tokenProvider.isExpiredRefToken(username, response);//리프레시 토큰의 존재여부
-            
-            //리프레시 토큰이 만료라면
-            if (!refEx) {
-                response.sendRedirect("/member/loginForm");
-                return;
-            }
+            refEx = tokenProvider.isExpiredRefToken(username, response);//리프레시 토큰의 존재여부
+        }
+        
+        //리프레시 토큰이 만료라면 동작
+        if (refEx) {
+            response.sendRedirect("/member/loginForm");
+            return;
         }
         
         log.info("=============== 쿠키에서 토큰을 꺼내서 검증 시작 ===============");
-        
         String accToken = tokenProvider.getTokenFromCookie(request);
         //헤더가 비어있거나 Bearer 방식이 아니라면 반환시킨다.
         if (accToken == null || !accToken.startsWith(jwtYml.getPrefix())) {

@@ -108,7 +108,7 @@ public class TokenProvider {
         
         if (redisService.getRefreshToken(username) == null) {//리프레시 토큰이 만료라면
             log.info("refreshToken이 만료됐습니다");
-            return false;
+            return true;
         }
         //리프레시 토큰이 만료가 아니라면
         if (checkRefreshToken(username)) {//리프레시 토큰의 만료기간 확인 7일전이라면
@@ -116,7 +116,7 @@ public class TokenProvider {
         }
         createToken(username, response); //엑세스토큰 생성
         log.info("AccessToken 생성");
-        return true;
+        return false;
     }
     
     /**
