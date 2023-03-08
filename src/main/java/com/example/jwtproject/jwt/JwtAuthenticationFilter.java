@@ -49,7 +49,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         
-        log.info("=========로그인시도시 쿠키 삭제=========");//로그인이 실패해도 쿠키를 검증해서 리프레시 토큰을 만들어버림ㅠ
+        log.info("=========로그인시도시 쿠키 삭제=========");
         Cookie delCookie = new Cookie("Authorization", null);
         delCookie.setMaxAge(0);
         response.addCookie(delCookie);
@@ -120,6 +120,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         
         tokenProvider.refreshToken(username);
         log.info(jwtYml.getHeader() + " " + jwtYml.getPrefix() + accToken);
+        response.sendRedirect("/jyHome");
         
     }
     

@@ -45,7 +45,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
          * 엑세스 토큰이 담겨있는 쿠키의 존재여부를 확인 없으면 종료
          */
         String acToken = "";
-        acToken = tokenProvider.getTokenFromCookie(request);
+        acToken = tokenProvider.getTokenFromCookie();
         if (acToken == null) { //쿠키자체가 없으면 로그인이 안된거니까 메인화면으로 이동
             log.info("엑세스토큰이 담긴 쿠키가 없음");
             response.sendRedirect("/");
@@ -77,7 +77,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         }
         
         log.info("=============== 쿠키에서 토큰을 꺼내서 검증 시작 ===============");
-        String accToken = tokenProvider.getTokenFromCookie(request);
+        String accToken = tokenProvider.getTokenFromCookie();
         //헤더가 비어있거나 Bearer 방식이 아니라면 반환시킨다.
         if (accToken == null || !accToken.startsWith(jwtYml.getPrefix())) {
             chain.doFilter(request, response);

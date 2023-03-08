@@ -38,32 +38,32 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         return http
-                    .httpBasic().disable()
-                    .addFilter(corsConfig.corsFilter())
-                    .csrf().disable()
-                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)//세션사용안함
+                        .httpBasic().disable()
+                        .addFilter(corsConfig.corsFilter())
+                        .csrf().disable()
+                        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)//세션사용안함
                 .and()
-                    .formLogin().disable()
-                    .apply(authCustomFilter)
+                        .formLogin().disable()
+                        .apply(authCustomFilter)
                 .and()
-                    .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .and()
-                    .authorizeRequests()
-                    .antMatchers("/test").authenticated()
-                    .antMatchers("/", "/member/**", "/user/**", "/jyHome","/selectUserData","/selectUserRoles","/selectUserDB").permitAll()
-                    .anyRequest().permitAll()//모든 권한 다 허용
+                        .authorizeRequests()
+                        .antMatchers("/test").authenticated()
+                        .antMatchers("/", "/member/**", "/user/**", "/jyHome","/selectUserData","/selectUserRoles","/selectUserDB").permitAll()
+                        .anyRequest().permitAll()//모든 권한 다 허용
                 .and()
-                    .logout()
-                    .logoutUrl("/logout")
-                    .logoutSuccessUrl("/")
-                    .deleteCookies("Authorization")
+                        .logout()
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/")
+                        .deleteCookies("Authorization")
                 .and()
             .build();
 
     }
     
     @Bean
-    public WebSecurityCustomizer configure(){ // 시큐리티의 적용에서 제외할것들(필터를 타지 않게 하려는것들 등록)
+    public WebSecurityCustomizer configure(){ // 시큐리티에서 제외할것들(필터를 타지 않게 하려는것들 등록)
         return (web) -> web.ignoring().mvcMatchers(
             "/","/member/failLoginForm","/member/loginForm"
         );

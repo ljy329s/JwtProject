@@ -23,29 +23,25 @@ public class RedisService {
     private final StringRedisTemplate stringRedisTemplate;
     private final RedisYml redisYml;
     
-    
-    //key 로 value 가져오기 리프레시 토큰저장할때 prefix로 ReT_
-    public String getRefreshToken(String key) {
-        ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
-        return valueOperations.get(redisYml.getReKey() + key);
-    }
-    
-    //리프레시 토큰을 레디스에서 특정 유효시간 동안만 저장되도록 함
+    /**
+     * 리프레시 토큰 레디스에 저장
+     */
     public void setRefreshToken(String key, String value, long duration) {
         ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
         Duration expireDuration = Duration.ofMillis(duration);//24초
         valueOperations.set(redisYml.getReKey() + key, value, expireDuration);
     }
     
-    //삭제하기
-    public void deleteData(String key) {
-        stringRedisTemplate.delete(key);
+    /**
+     * 리프레시 토큰 가져오기
+     */
+    public String getRefreshToken(String key) {
+        ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
+        return valueOperations.get(redisYml.getReKey() + key);
     }
     
-    
-    
     /**
-     * 로그인한 유저의 권한을 저장 Role_username Role_이라는 prefix를 앞에다가 추가 userId로 key
+     * 로그인한 유저의 권한을 저장 Role_이라는 prefix를 앞에다가 추가
      */
     
     public void setUserRole(String key, String value, long duration) {
@@ -84,7 +80,7 @@ public class RedisService {
     
     
     /**
-     * 로그인시 유저의 데이터들을 저장 username 즉 userId를 key로 사용
+     * 로그인시 유저의 정보들을 저장
      */
     
     public void setUserDate(String username, PrincipalDetails principal, long accessTime) {
@@ -99,7 +95,6 @@ public class RedisService {
         map.put("userEmail", userEmail);
         
         hashOperations.putAll(username, map);
-        
     }
     
     /**
@@ -110,6 +105,14 @@ public class RedisService {
         String userData = hashOperations.get(username, filed);
         return userData;
     }
+    
+    /**
+     * 삭제하기
+     */
+    public void deleteData(String key) {
+        stringRedisTemplate.delete(key);
+    }
+    
 }
 
 

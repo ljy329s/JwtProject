@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.context.request.ServletWebRequest;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -53,7 +56,7 @@ public class TokenProvider {
         cookie.setHttpOnly(true);//스크립트 상에서 접근이 불가능하도록 한다.
         //cookie.setSecure(true);//패킷감청을 막기 위해서 https 통신시에만 해당 쿠키를 사용하도록 한다.
         cookie.setPath("/");//쿠키경로 설정 모든경로에서 "/" 사용하겠다
-        cookie.setMaxAge(60 * 60 * 24);//쿠키 만료시간 하루
+        cookie.setMaxAge(60 * 60 * 24);//쿠키 만료시간 하루 (쿠키에 만료시간을 넣어두지 않으면 창닫기와 동시에 삭제된다.)
         response.addCookie(cookie);
         return token;
     }
@@ -75,7 +78,6 @@ public class TokenProvider {
     /**
      * 엑세스토큰 만료여부를 확인하는 메서드
      */
-    
     public boolean isExpiredAccToken(String jwtToken) {
         String npToken = jwtToken.replace(jwtYml.getPrefix(), "");//prefix 제거
         
@@ -153,8 +155,8 @@ public class TokenProvider {
     /**
      * 쿠키에서 토큰을 꺼내는 메서드 쿠키에 저장된 엑세스토큰을 리턴한다
      */
-    public String getTokenFromCookie(HttpServletRequest request) {
-        
+    public String getTokenFromCookie() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {//쿠키가 존재한다면
             for (Cookie c : cookies) {

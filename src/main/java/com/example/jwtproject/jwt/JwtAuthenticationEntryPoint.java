@@ -1,5 +1,6 @@
 package com.example.jwtproject.jwt;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.AuthenticationException;
@@ -25,7 +26,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         log.info("JwtAuthenticationEntryPoint 의 commence ==> 예외발생");
         response.setCharacterEncoding("utf-8");
         response.sendError(401, "잘못된 접근입니다.");
-    
+        
     
         /**
          * JWT Exception 종류

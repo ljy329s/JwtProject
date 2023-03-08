@@ -12,10 +12,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class JwtService {
 
-    private final JwtYml jwtYml;
 
-    private RedisService redisService;
 
-    {
-    }
 }
