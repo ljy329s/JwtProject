@@ -1,10 +1,8 @@
 package com.example.jwtproject.auth;
 
 import com.example.jwtproject.model.domain.Member;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.util.ArrayList;

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -20,6 +21,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 로그인 요청이 오면 JwtAuthenticationFilter 에서 attemptAuthentication() 을 호출하여 인증처리
@@ -58,8 +62,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         ObjectMapper om = new ObjectMapper();
         
         try {
-            //request로 넘어오는 유저가 입력한 username, password를 받아서 로그인요청 객체를 생성후
-            //Authenticate 를 위한 UserPasswordAuthenticationToken 을 발행한다.
             
             Login login = om.readValue(request.getInputStream(), Login.class);
             
@@ -71,14 +73,17 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             
             // 전달받은 로그인정보를 이용해서 생성한 토큰 => 가지고 로그인이 유효한지 검증
             // 회원조회후 존재할때 해당토큰 검증하면된다.(principal == username && credentials == password)
-       
-            // id 와 pw가 일치하면 알아서 authentication을 반환해주고 아니라면 연결종료시킴
-            // 패스워드를 비교하는 로직은 시큐리티 내부에서 검증하기에 따로 작성하지 않아도 된다.
             System.out.println("============== 로그인 검증 시작 ===============");
             
             // authenticationManager.authenticate()에 토큰을 넘기면 자동으로 UserDetailsService.class의 loadUserByUsername() 메소드가 실행된다.
-            Authentication authentication =
-                authenticationManager.authenticate(authenticationToken);//authenticate(Authentication) : 인증의 전반적인 관리
+            Authentication authentication;
+            try {
+               authentication =
+                   authenticationManager.authenticate(authenticationToken);//authenticate(Authentication) : 인증의 전반적인 관리
+            }catch (NullPointerException | InternalAuthenticationServiceException e){
+               log.info("해당유저가 없습니다.");
+               return null;
+           }
             //3.로그인 성공 확인
             System.out.println("3. 로그인 성공여부 확인중");
             
@@ -108,13 +113,21 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String username = principal.getUsername();
         
         String roleList = principal.getMember().getRoleList().toString();
-        System.out.println("roleList : " + principal.getMember().getRoleList());
+  
+        //test
+        List<String> roleList2 = principal.getMember().getRoleList();
+    
+        System.out.println("roleList : " + roleList);
+        System.out.println("roleList2 : " + roleList2);
+        System.out.println(roleList2.size());
+        
         //레디스에 유저 권한 정보 보내기
         redisService.setUserRole(username, roleList, jwtYml.getAccessTime());
         redisService.setUserDate(username, principal, jwtYml.getAccessTime());
+       
+        //test
+        redisService.testSetUserRole(username,roleList2,jwtYml.getAccessTime());
         
-        //레디스에서 유저 권한 조회하기 임시로 여기에 작성
-        redisService.getUseRole(username);
         
         String accToken = tokenProvider.createToken(username, response);
         

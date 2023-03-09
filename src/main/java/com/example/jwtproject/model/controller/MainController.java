@@ -11,6 +11,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RequiredArgsConstructor
@@ -35,7 +36,7 @@ public class MainController {
         return "<h1>테스트화면입니다</h1>";
     }
     
-    @GetMapping("/member/loginForm")
+    @RequestMapping(method = {RequestMethod.GET, RequestMethod.POST}, value = "/member/loginForm")
     public Map<String, String> loginForm() {
         Map<String, String> result = new HashMap<>();
         result.put("message", "로그인폼이동");
@@ -85,21 +86,26 @@ public class MainController {
     public void selectUserRoles(@RequestBody Map<String, String> data) {
         System.out.println("==========레디스에서 유저정보 조회===========");
         
-        String data1 = redisService.getUseRole(data.get("username"));
+        List data1 = redisService.getUseRole(data.get("username"));
         System.out.println(" === userRole === " + data1);
         
     }
     
     @RequestMapping(method = {RequestMethod.GET, RequestMethod.POST}, value = "/jyHome")
-    public String jyHome() {
+    public Map<String, String> jyHome() {
+        Map<String, String> result = new HashMap<>();
         String token = tokenProvider.getTokenFromCookie();
         String username = null;
         if (token != null) {
              username = tokenProvider.getNameFromToken(token);
         }
         if (username != null) {
-            return "<h1>jyHome 메인화면입니다 어서오세요 " + username + " 님 </h1>";
+            result.put("username",username);
+            result.put("result","success");
+            return result;
         }
-        return null;
+        result.put("username",null);
+        result.put("result","fail");
+        return result;
     }
 }

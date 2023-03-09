@@ -20,6 +20,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+    
+
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
         
@@ -27,7 +29,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setCharacterEncoding("utf-8");
         response.sendError(401, "잘못된 접근입니다.");
         
-    
+        
         /**
          * JWT Exception 종류
          * ExpiredJwtException : JWT를 생성할 때 지정한 유효기간 초과할 때.
@@ -36,4 +38,5 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
          * SignatureException :  JWT의 기존 서명을 확인하지 못했을 때
          */
     }
+
 }

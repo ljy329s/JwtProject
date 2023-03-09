@@ -2,6 +2,7 @@ package com.example.jwtproject.jwt;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.jwtproject.common.JwtYml;
@@ -83,16 +84,13 @@ public class TokenProvider {
         
         Date now = new Date();
         Date expiresAt = new Date();
-        try {
             expiresAt = require(Algorithm.HMAC256(jwtYml.getSecretKey()))
                 .build()
                 .verify(npToken)
                 .getExpiresAt();
             log.info("지금시간 : " + now);
             log.info("엑세스토큰의 만료시간 : " + expiresAt);
-        } catch (TokenExpiredException e) {
-            log.info("만료된 토큰입니다.");
-        }
+        
         if (now.before(expiresAt)) {//현재시간이 만료시간보다 이전이라면
             log.info("만료전");
             return false;
@@ -109,7 +107,7 @@ public class TokenProvider {
         log.info("리프레시 토큰의 만료여부를 확인하는 메서드 isExpiredRefToken()");
         
         if (redisService.getRefreshToken(username) == null) {//리프레시 토큰이 만료라면
-            log.info("refreshToken이 만료됐습니다");
+            log.info("리프레시토큰이 만료됐습니다");
             return true;
         }
         //리프레시 토큰이 만료가 아니라면

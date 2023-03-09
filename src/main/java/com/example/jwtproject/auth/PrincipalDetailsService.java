@@ -14,19 +14,17 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class PrincipalDetailsService implements UserDetailsService {
-
+    
     private final MemberRepository memberRepository;
     
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.info("=======loadUserByUsername 시작===========");
         Member member = memberRepository.selectMember(username);
-        if(member==null){
-            log.info("유저 없음");
-            return null;
+        if (member != null) {
+            return new PrincipalDetails(member);
         }
-        log.info("해당 아이디 존재");
-        
-        return new PrincipalDetails(member);
+        log.info("해당 아이디가 없습니다");
+        return null;
     }
 }

@@ -25,7 +25,9 @@ public class JwtYml {
     
     private final int refreshAlarm;
     
-    //base64로 인코딩
+    /**
+     * secretKey를 get할때는 base64로 인코딩하고서 리턴
+     */
     public String getSecretKey() {
         String secretKey = Base64.getEncoder().encodeToString(this.secretKey.getBytes());
         return secretKey;
