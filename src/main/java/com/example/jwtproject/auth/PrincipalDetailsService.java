@@ -1,6 +1,5 @@
 package com.example.jwtproject.auth;
 
-import com.example.jwtproject.jwt.TokenProvider;
 import com.example.jwtproject.model.domain.Member;
 import com.example.jwtproject.model.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,6 @@ public class PrincipalDetailsService implements UserDetailsService {
     
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.info("=======loadUserByUsername 시작===========");
         Member member = memberRepository.selectMember(username);
         if (member != null) {
             return new PrincipalDetails(member);

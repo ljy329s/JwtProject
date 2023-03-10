@@ -2,7 +2,6 @@ package com.example.jwtproject.jwt;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.jwtproject.common.JwtYml;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.context.request.ServletWebRequest;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -44,14 +42,11 @@ public class TokenProvider {
     
     @Transactional
     public String createToken(String username, HttpServletResponse response) {
-        log.info("엑세스토큰생성");
         String token = JWT.create()
             .withSubject("Jwt_accessToken")
             .withExpiresAt(new Date(System.currentTimeMillis() + jwtYml.getAccessTime()))//만료시간 2분
             .withClaim("username", username)
             .sign(Algorithm.HMAC256(jwtYml.getSecretKey()));
-        
-        log.info("========== cookie 에 엑세스 토큰 저장 ==========");
         
         Cookie cookie = new Cookie(jwtYml.getHeader(), jwtYml.getPrefix() + token);
         cookie.setHttpOnly(true);//스크립트 상에서 접근이 불가능하도록 한다.
@@ -73,7 +68,6 @@ public class TokenProvider {
             .withExpiresAt(new Date(System.currentTimeMillis() + jwtYml.getRefreshTime()))//만료시간 6분
             .sign(Algorithm.HMAC256(jwtYml.getSecretKey()));
         redisService.setRefreshToken(refKey, refToken, jwtYml.getRefreshTime());
-        log.info("RefToken 생성 : " + refToken);
     }
     
     /**
@@ -81,18 +75,19 @@ public class TokenProvider {
      */
     public boolean isExpiredAccToken(String jwtToken) {
         String npToken = jwtToken.replace(jwtYml.getPrefix(), "");//prefix 제거
-        
         Date now = new Date();
         Date expiresAt = new Date();
+        try {
             expiresAt = require(Algorithm.HMAC256(jwtYml.getSecretKey()))
                 .build()
                 .verify(npToken)
                 .getExpiresAt();
-            log.info("지금시간 : " + now);
-            log.info("엑세스토큰의 만료시간 : " + expiresAt);
-        
+        } catch (TokenExpiredException e) {
+            log.info("엑세스토큰 만료");
+            return true;
+        }
         if (now.before(expiresAt)) {//현재시간이 만료시간보다 이전이라면
-            log.info("만료전");
+            log.info("엑세스토큰 만료전! 만료시간 : " + expiresAt);
             return false;
         }
         return true;
@@ -104,18 +99,19 @@ public class TokenProvider {
      */
     
     public boolean isExpiredRefToken(String username, HttpServletResponse response) {
-        log.info("리프레시 토큰의 만료여부를 확인하는 메서드 isExpiredRefToken()");
         
         if (redisService.getRefreshToken(username) == null) {//리프레시 토큰이 만료라면
             log.info("리프레시토큰이 만료됐습니다");
             return true;
         }
-        //리프레시 토큰이 만료가 아니라면
+        
         if (checkRefreshToken(username)) {//리프레시 토큰의 만료기간 확인 7일전이라면
+            log.info("리프레시토큰 만료 7일전");
             refreshToken(username);//리프레시 토큰 생성
         }
-        createToken(username, response); //엑세스토큰 생성
-        log.info("AccessToken 생성");
+        
+        createToken(username, response); //7일이상이면 엑세스토큰만 생성
+        log.info("엑세스토큰 재생성");
         return false;
     }
     
@@ -128,7 +124,7 @@ public class TokenProvider {
             String token = redisService.getRefreshToken(username);
             Date expiresAt = JWT.require(Algorithm.HMAC256(jwtYml.getSecretKey()))
                 .build()
-                .verify(token)//verify는 토큰이 만료되면 예외로 던짐
+                .verify(token)
                 .getExpiresAt();
             
             Date current = new Date(System.currentTimeMillis());
@@ -181,9 +177,6 @@ public class TokenProvider {
             String username = decodedJwt.getClaim("username").asString();
             return username;
         }
-     
         return null;
     }
 }
-
-

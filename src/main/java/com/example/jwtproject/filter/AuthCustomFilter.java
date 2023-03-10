@@ -22,8 +22,6 @@ public class AuthCustomFilter extends AbstractHttpConfigurer<AuthCustomFilter, H
     
     private final JwtYml jwtYml;
     
-    private final MemberRepository memberRepository;
-    
     private final RedisService redisService;
     
   
@@ -33,7 +31,7 @@ public class AuthCustomFilter extends AbstractHttpConfigurer<AuthCustomFilter, H
         AuthenticationManager authenticationManager = http.getSharedObject(AuthenticationManager.class);//꼭 넘겨야하는 파라미터 AuthenticationManger! 얘가 로그인을 진행하는 필터이기 때문
         http
             .addFilter(new JwtAuthenticationFilter(authenticationManager, jwtYml, tokenProvider,redisService))//로그인 인증처리
-            .addFilter(new JwtAuthorizationFilter(authenticationManager , memberRepository, jwtYml, tokenProvider, redisService));//인증 + 인가처리
+            .addFilter(new JwtAuthorizationFilter(authenticationManager,jwtYml, tokenProvider, redisService));//인증 + 인가처리
        
     }
 }

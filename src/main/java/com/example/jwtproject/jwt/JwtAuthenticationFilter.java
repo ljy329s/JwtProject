@@ -21,9 +21,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * 로그인 요청이 오면 JwtAuthenticationFilter 에서 attemptAuthentication() 을 호출하여 인증처리
@@ -53,42 +50,30 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         
-        log.info("=========로그인시도시 쿠키 삭제=========");
+        log.info("=========로그인시도 쿠키 삭제=========");
         Cookie delCookie = new Cookie("Authorization", null);
         delCookie.setMaxAge(0);
         response.addCookie(delCookie);
         
-        log.info("로그인시도");
         ObjectMapper om = new ObjectMapper();
         
         try {
-            
             Login login = om.readValue(request.getInputStream(), Login.class);
             
             UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(login.getUsername(), login.getPassword());
             
-            log.info(authenticationToken.getPrincipal().toString());//username은 principal 이 되고
-            log.info(authenticationToken.getCredentials().toString());//password는 credentials가 된다.
-            
-            // 전달받은 로그인정보를 이용해서 생성한 토큰 => 가지고 로그인이 유효한지 검증
-            // 회원조회후 존재할때 해당토큰 검증하면된다.(principal == username && credentials == password)
-            System.out.println("============== 로그인 검증 시작 ===============");
-            
-            // authenticationManager.authenticate()에 토큰을 넘기면 자동으로 UserDetailsService.class의 loadUserByUsername() 메소드가 실행된다.
+            // 전달받은 로그인정보를 이용해서 생성한 토큰 authenticationToken 을 가지고
+            // 회원조회후 존재하는 회원일때 해당토큰 검증(아이디 비밀번호 일치 : principal == username && credentials == password)
+            // authenticationManager.authenticate()에 토큰을 넘기면 자동으로 UserDetailsService.class의 loadUserByUsername() 메소드가 실행
             Authentication authentication;
             try {
-               authentication =
-                   authenticationManager.authenticate(authenticationToken);//authenticate(Authentication) : 인증의 전반적인 관리
-            }catch (NullPointerException | InternalAuthenticationServiceException e){
-               log.info("해당유저가 없습니다.");
-               return null;
-           }
-            //3.로그인 성공 확인
-            System.out.println("3. 로그인 성공여부 확인중");
-            
-            PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
-            
+                authentication =
+                    authenticationManager.authenticate(authenticationToken);//authenticate(Authentication) : 인증의 전반적인 관리
+            } catch (NullPointerException | InternalAuthenticationServiceException e) {
+                log.info("해당유저가 없습니다.");
+                return null;
+            }
             return authentication;
             
         } catch (IOException e) {
@@ -106,35 +91,19 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult)
         throws IOException, ServletException {
-        log.info("=========== 로그인 성공시 동작 : JwtAuthenticationFilter 의 successfulAuthentication() ===========");
         
         PrincipalDetails principal = ((PrincipalDetails) authResult.getPrincipal());
-        
         String username = principal.getUsername();
-        
         String roleList = principal.getMember().getRoleList().toString();
-  
-        //test
-        List<String> roleList2 = principal.getMember().getRoleList();
-    
-        System.out.println("roleList : " + roleList);
-        System.out.println("roleList2 : " + roleList2);
-        System.out.println(roleList2.size());
         
         //레디스에 유저 권한 정보 보내기
-        redisService.setUserRole(username, roleList, jwtYml.getAccessTime());
-        redisService.setUserDate(username, principal, jwtYml.getAccessTime());
-       
-        //test
-        redisService.testSetUserRole(username,roleList2,jwtYml.getAccessTime());
+        redisService.setUserRole(username, roleList, jwtYml.getRefreshTime());
+        redisService.setUserDate(username, principal, jwtYml.getRefreshTime());
         
-        
-        String accToken = tokenProvider.createToken(username, response);
-        
+        //토큰 생성
+        tokenProvider.createToken(username, response);
         tokenProvider.refreshToken(username);
-        log.info(jwtYml.getHeader() + " " + jwtYml.getPrefix() + accToken);
         response.sendRedirect("/jyHome");
-        
     }
     
     /**
@@ -143,7 +112,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      */
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
-        log.info("=========== 로그인 실패시 동작 : JwtAuthenticationFilter 의 unsuccessfulAuthentication ===========");
+        log.info("=========== 로그인 실패 ===========");
         response.sendRedirect("/member/failLoginForm");
     }
 }

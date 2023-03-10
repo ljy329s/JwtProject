@@ -49,7 +49,8 @@ public class SecurityConfig {
                         .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .and()
                         .authorizeRequests()
-                        .antMatchers("/test").hasRole("USER")
+                        .antMatchers("/test").hasAnyRole("USER","TEST")
+                        .antMatchers("/hello").hasAnyRole("ADMIN","MANAGER")
                         .antMatchers("/", "/member/**", "/user/**", "/jyHome","/selectUserData","/selectUserRoles","/selectUserDB").permitAll()
                         .anyRequest().permitAll()//모든 권한 다 허용
                 .and()

@@ -1,6 +1,8 @@
 package com.example.jwtproject.model.domain;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.apache.ibatis.type.Alias;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -10,8 +12,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Setter
 @Getter
 @Alias("member")
+@NoArgsConstructor
 public class Member {
     
     /**
