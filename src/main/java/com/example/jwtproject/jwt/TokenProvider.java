@@ -68,8 +68,11 @@ public class TokenProvider {
                 .getIssuer();
         } catch (NullPointerException e) {
             log.info("토큰의 작성자 없음.");
+        } catch (TokenExpiredException e) {
+            log.info("토큰 만료");
         }
-        if (issuer == null || issuer.equals("ljy")) {
+        if (issuer == null || issuer.equals(jwtYml.getIssuer())) {
+            log.info("토큰의 작성자 정상");
             return false;
         }
         return true;

@@ -19,6 +19,8 @@ public class JwtYml {
     
     private final String prefix;
     
+    private final String issuer;
+    
     private final long accessTime;
     
     private final long refreshTime;

@@ -26,6 +26,7 @@ jwt:
   header: Authorization
   secret-key: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
   prefix: Bearer
+  issuer: ljy
   access-time: 12000
   refresh-time: 24000
   refresh-alarm: 12000
