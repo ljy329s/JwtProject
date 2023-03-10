@@ -53,6 +53,12 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             response.sendRedirect("/");
             return;
         }
+        //prefix가 Bearer가 아니거나 작성자가 ljy가 아니라면 반환
+        if (!acToken.startsWith(jwtYml.getPrefix()) || tokenProvider.notIssuer(acToken)) {
+            chain.doFilter(request, response);
+            log.info("권한이 없습니다");
+            return;
+        }
         
         /**
          * 쿠키가 있을때 동작 모든요청마다 엑세스토큰의 만료여부를 가장 먼저 체크한다
@@ -76,12 +82,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             return;
         }
         
-        //헤더가 비어있거나 Bearer 방식이 아니라면 반환시킨다.
-        if (acToken == null || !acToken.startsWith(jwtYml.getPrefix())) {
-            chain.doFilter(request, response);
-            log.info("권한이 없습니다");
-            return;
-        }
         
         Member member = redisService.getUseRole(username);
         PrincipalDetails principalDetails = new PrincipalDetails(member);

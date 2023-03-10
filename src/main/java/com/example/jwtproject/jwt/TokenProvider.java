@@ -43,6 +43,7 @@ public class TokenProvider {
     @Transactional
     public String createToken(String username, HttpServletResponse response) {
         String token = JWT.create()
+            .withIssuer("ljy")
             .withSubject("Jwt_accessToken")
             .withExpiresAt(new Date(System.currentTimeMillis() + jwtYml.getAccessTime()))//만료시간 2분
             .withClaim("username", username)
@@ -56,6 +57,24 @@ public class TokenProvider {
         response.addCookie(cookie);
         return token;
     }
+    
+    public boolean notIssuer(String acToken) {// 잘못된 작성자 token에서 issuer이 없거나, ljy가 아니라면 리턴
+        String accToken = acToken.replace(jwtYml.getPrefix(), "");
+        String issuer = null;
+        try {
+            issuer = require(Algorithm.HMAC256(jwtYml.getSecretKey()))
+                .build()
+                .verify(accToken)
+                .getIssuer();
+        } catch (NullPointerException e) {
+            log.info("토큰의 작성자 없음.");
+        }
+        if (issuer == null || issuer.equals("ljy")) {
+            return false;
+        }
+        return true;
+    }
+    
     
     /**
      * 리프레시 토큰을 생성하는 메서드
