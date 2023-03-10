@@ -63,7 +63,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(login.getUsername(), login.getPassword());
             
-            // 전달받은 로그인정보를 이용해서 생성한 토큰 authenticationToken 을 가지고
+            // 전달받은 로그인 정보를 이용해서 생성한 토큰 authenticationToken을 가지고
             // 회원조회후 존재하는 회원일때 해당토큰 검증(아이디 비밀번호 일치 : principal == username && credentials == password)
             // authenticationManager.authenticate()에 토큰을 넘기면 자동으로 UserDetailsService.class의 loadUserByUsername() 메소드가 실행
             Authentication authentication;

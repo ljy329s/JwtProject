@@ -67,7 +67,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         }
         
         if (accEx) { //엑세스 토큰이 만료라면 동작
-            log.info("========= 엑세스 토큰 만료! 리프레시 토큰의 만료여부 확인 =========");
+            log.info("========= 엑세스 토큰 만료! =========");
             refEx = tokenProvider.isExpiredRefToken(username, response);//리프레시 토큰의 존재여부
         }
         

@@ -72,9 +72,7 @@ public class JyBoard {
      * 그룹번호
      */
     private Long groupBno;
-
-
-    private List<JyAttach> jyAttachList;
+    
 
 }
 

@@ -10,11 +10,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 /**
  * 레디스 서버에서 깨지지않게 보려면 이렇게 시작해야함
@@ -60,39 +57,14 @@ public class RedisService {
         ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
         String roles = value.toString();
         Duration expireDuration = Duration.ofMillis(duration);
-        
         String cleanRoles = roles.replaceAll("[ \\[ \\] ]", "");
-        System.out.println("유저권한 조회" + cleanRoles);
         valueOperations.set(redisYml.getRoleKey() + key, cleanRoles, expireDuration);
     }
     
     
     /**
-     * 유저의 권한 조회하기 원본
+     * 로그인한 유저의 권한을 조회
      */
-//    public String getUseRole(String key) {
-//        String roles;
-//
-//        ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
-//
-//        roles = valueOperations.get(redisYml.getRoleKey() + key);
-//        if (roles != null) {
-//            String cleanRoles = roles.replaceAll("[ \\[ \\] ]", "");
-//
-//            int count = cleanRoles.length() - cleanRoles.replace(",", "").length();//특정 문자의 갯수
-//            System.out.println("유저권한 조회 : " + cleanRoles);
-//
-//            String[] role = cleanRoles.split(",");
-//
-//            for (int i = 0; i <= count; i++) {
-//                System.out.println(" 유저권한 " + role[i]);
-//            }
-//            System.out.println(roles);
-//            return roles;
-//        }
-//        return null;
-//    }
-//
     public Member getUseRole(String key) {
         ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
         String roles = valueOperations.get(redisYml.getRoleKey() + key);

@@ -82,17 +82,6 @@ public class Member {
     private String provider;
     
     private String providerId;
-
-//  //프로필 관련
-//    /**
-//     * 저장경로
-//     */
-//    private String uploadPath;
-//
-//    /**
-//     * 저장될 파일명
-//     */
-//    private String changeName;
     
     /**
      * 원본 파일명

@@ -173,7 +173,7 @@ public class TokenProvider {
         
         String npToken = token.replace(jwtYml.getPrefix(), "");
         if (token != null) {
-            DecodedJWT decodedJwt = JWT.decode(npToken);//decode() 메서드는 토큰의 만료를 확인하지 않으므로 토큰이 만료된 경우에도 사용자 이름을 반환한다.
+            DecodedJWT decodedJwt = JWT.decode(npToken);//decode() 메서드는 토큰의 만료를 확인하지 않기에 예외 발생하지 않음.
             String username = decodedJwt.getClaim("username").asString();
             return username;
         }
